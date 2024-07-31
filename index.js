@@ -28,6 +28,7 @@ const PG_BLOCKS           = Array.from({length: PG_HEIGHT_IN_BLOCKS}, e => new A
 
 const SHAPE_WIDTH  = 4;
 const SHAPE_HEIGHT = 4;
+// TODO: shapes with different size (4x4, 2x2, etc.)
 const SHAPE_DIRECTIONS = [
     [
         [[0,0,1,0],
@@ -166,6 +167,7 @@ function clearBlock(loc) {
     );
 }
 
+// TODO: position here instand of in player
 function Shape(shapeId, shapeDirectionId = 0) {
     return {
         directions:  SHAPE_DIRECTIONS[shapeId],
@@ -189,6 +191,7 @@ function Shape(shapeId, shapeDirectionId = 0) {
     };
 }
 
+// TODO: random direction
 function generateShapeRenderer() {
     let bg1 = [
         Math.floor(Math.random()*255), 
@@ -278,3 +281,8 @@ setInterval(() => {
 
 renderPg();
 PLAYER.render();
+
+
+
+// TODO: animations for blocks
+// TODO: maybe particles
