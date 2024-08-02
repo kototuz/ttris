@@ -207,8 +207,9 @@ function gridRender() {
 
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
         for (let col = 0; col < GRID_COLS_COUNT; col++) {
-            if (GRID[row][col]) {
-                gridFillCell(new Palette({ r: 0xff, g: 0x00, b: 0x00 }), new Loc(row, col));
+            const palette = GRID[row][col];
+            if (palette) {
+                gridFillCell(palette, new Loc(row, col));
             }
         }
     }
@@ -237,7 +238,7 @@ function gridAdd(shape) {
     for (let row = 0; row < shape.scheme.length; row++) {
         for (let col = 0; col < shape.scheme[row].length; col++) {
             if (shape.scheme[row][col]) {
-                GRID[shape.loc.row+row][shape.loc.col+col] = 1;
+                GRID[shape.loc.row+row][shape.loc.col+col] = shape.palette;
             }
         }
     }
@@ -277,7 +278,6 @@ const PLAYER = {
 
 
 (() => {
-    GRID[GRID_ROWS_COUNT-1] = [0,1,1,1];
     gridRender();
 
     document.addEventListener("keypress", PLAYER.eventListener);
