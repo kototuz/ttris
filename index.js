@@ -41,6 +41,26 @@ class Loc {
     }
 }
 
+class Palette {
+    constructor(mainColorRgb) {
+        let secondColorRgb = { ...mainColorRgb };
+        secondColorRgb.r -= 0x44;
+        secondColorRgb.g -= 0x44;
+        secondColorRgb.b -= 0x44;
+
+        this.color1 = mainColorRgb;
+        this.color2 = secondColorRgb;
+    }
+
+    toStringColor0() {
+        return `rgb(${this.color1.r}, ${this.color1.g}, ${this.color1.b})`;
+    }
+
+    toStringColor1() {
+        return `rgb(${this.color2.r}, ${this.color2.g}, ${this.color2.b})`;
+    }
+}
+
 class Shape {
     static SCHEMES = [
         [
@@ -58,11 +78,11 @@ class Shape {
         ]
     ];
 
-    constructor(id, dirId, color, loc) {
+    constructor(id, dirId, palette, loc) {
         this.dirGen = Shape.dirGenerator(Shape.SCHEMES[id], dirId);
         this.scheme = this.dirGen.next().value;
         this.loc = loc;
-        this.color = color;
+        this.palette = palette;
     }
 
     stepLeft() {
@@ -103,7 +123,7 @@ class Shape {
             for (let col = 0; col < this.scheme[row].length; col++) {
                 if (this.scheme[row][col]) {
                     gridFillCell(
-                        this.color,
+                        this.palette,
                         Loc.sum(this.loc, row, col)
                     );
                 }
@@ -156,17 +176,17 @@ class Shape {
     static random(loc) {
         const id = Math.floor(Math.random() * Shape.SCHEMES.length);
         const dirId = Math.floor(Math.random() * Shape.SCHEMES[id].length);
-        const color = [
-            Math.floor(Math.random() * 255),
-            Math.floor(Math.random() * 255),
-            Math.floor(Math.random() * 255),
-        ];
+        const color = {
+            r: Math.floor(Math.random() * 255),
+            g: Math.floor(Math.random() * 255),
+            b: Math.floor(Math.random() * 255),
+        };
 
-        return new Shape(id, dirId, `rgb(${color.toString()})`, loc);
+        return new Shape(id, dirId, new Palette(color), loc);
     }
 }
 
-function gridFillCell(color, loc) {
+function gridFillCell(palette, loc) {
     console.assert(
         loc.row >= 0 &&
         loc.row < GRID_ROWS_COUNT &&
@@ -174,8 +194,11 @@ function gridFillCell(color, loc) {
         loc.col < GRID_COLS_COUNT
     );
 
-    GRID_CONTEXT.fillStyle = color;
-    GRID_CONTEXT.fillRect(...loc.asPos(), GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
+    const pos = loc.asPos();
+    GRID_CONTEXT.fillStyle = palette.toStringColor1();
+    GRID_CONTEXT.fillRect(...pos, GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
+    GRID_CONTEXT.fillStyle = palette.toStringColor0();
+    GRID_CONTEXT.fillRect(pos[0]+10, pos[1]+10, GRID_CELL_WIDTH-2*10, GRID_CELL_HEIGHT-2*10);
 }
 
 function gridRender() {
@@ -185,7 +208,7 @@ function gridRender() {
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
         for (let col = 0; col < GRID_COLS_COUNT; col++) {
             if (GRID[row][col]) {
-                gridFillCell("magenta", new Loc(row, col));
+                gridFillCell(new Palette({ r: 0xff, g: 0x00, b: 0x00 }), new Loc(row, col));
             }
         }
     }
