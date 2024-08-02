@@ -302,5 +302,6 @@ const PLAYER = {
 
 
 
+// TODO: player points
 // TODO: animations for blocks
 // TODO: maybe particles
