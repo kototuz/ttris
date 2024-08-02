@@ -8,279 +8,274 @@ window.onresize = () => {
     canvas.height = window.innerHeight;
 };
 
-const CONTEXT = canvas.getContext("2d");
+const GRID_CONTEXT     = canvas.getContext("2d");
+const GRID_POS         = {x: 0, y: 0};
+const GRID_ROWS_COUNT  = 10;
+const GRID_COLS_COUNT  = 10;
+const GRID_CELL_WIDTH  = 50;
+const GRID_CELL_HEIGHT = 50;
+const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
+const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
+const GRID_BG_COLOR    = "#101010";
+const GRID             = Array.from({length: GRID_HEIGHT}, e => new Array());
 
-const BLOCK_WIDTH  = 50;
-const BLOCK_HEIGHT = 50;
-const BLOCK_COLOR  = [0xff, 0x50, 0x50];
+class Loc {
+    constructor(row = 0, col = 0) {
+        this.row = row;
+        this.col = col;
+    }
 
-const BORDER = 5;
-const INNER_BLOCK_WIDTH = BLOCK_WIDTH-2*BORDER;
-const INNER_BLOCK_HEIGHT = BLOCK_HEIGHT-2*BORDER;
+    asArr() {
+        return [this.row, this.col];
+    }
 
-const PG_POS              = {x: 0, y: 0};
-const PG_WIDTH_IN_BLOCKS  = 10;
-const PG_HEIGHT_IN_BLOCKS = 10;
-const PG_WIDTH            = PG_WIDTH_IN_BLOCKS*BLOCK_WIDTH;
-const PG_HEIGHT           = PG_HEIGHT_IN_BLOCKS*BLOCK_HEIGHT;
-const PG_COLOR            = "#101010";
-const PG_BLOCKS           = Array.from({length: PG_HEIGHT_IN_BLOCKS}, e => new Array());
+    asPos() {
+        return [
+            GRID_POS.x + this.col*GRID_CELL_WIDTH,
+            GRID_POS.y + this.row*GRID_CELL_HEIGHT
+        ];
+    }
 
-const SHAPE_WIDTH  = 4;
-const SHAPE_HEIGHT = 4;
-// TODO: shapes with different size (4x4, 2x2, etc.)
-const SHAPE_DIRECTIONS = [
-    [
-        [[0,0,1,0],
-         [0,0,1,0],
-         [0,0,1,0],
-         [0,0,1,0]],
-        [[0,0,0,0],
-         [0,0,0,0],
-         [1,1,1,1],
-         [0,0,0,0]],
-    ],
-    [
-        [[1,1,0,0],
-         [1,1,0,0],
-         [0,0,0,0],
-         [0,0,0,0]],
-    ]
-];
+    static sum(l1, row, col) {
+        return new Loc(l1.row+row, l1.col+col);
+    }
+}
 
-const PLAYER = {
-    loc: {row: 2, col: 2},
-    shapeRenderer: generateShapeRenderer(),
-    atBottom: false,
+class Shape {
+    static SCHEMES = [
+        [
+            [[1,0],
+             [1,1]],
+
+            [[0,1],
+             [1,1]],
+
+            [[1,1],
+             [0,1]],
+
+            [[1,1],
+             [1,0]],
+        ]
+    ];
+
+    constructor(id, dirId, color, loc) {
+        this.dirGen = Shape.dirGenerator(Shape.SCHEMES[id], dirId);
+        this.scheme = this.dirGen.next().value;
+        this.loc = loc;
+        this.color = color;
+    }
+
+    stepLeft() {
+        if (this.#hasIntersection(0, -1)) return false;
+        this.loc.col -= 1;
+        return true;
+    }
+
+    stepRight() {
+        if (this.#hasIntersection(0, 1)) return false;
+        this.loc.col += 1;
+        return true;
+    }
+
+    stepDown() {
+        if (this.#hasIntersection(1, 0)) return false;
+        this.loc.row += 1;
+        return true;
+    }
+
+    flip() {
+        const newScheme = this.dirGen.next().value;
+        for (let row = 0; row < newScheme.length; row++) {
+            for (let col = 0; col < newScheme[row].length; col++) {
+                const cellLoc = Loc.sum(this.loc, row, col);
+                if (
+                    GRID[cellLoc.row][cellLoc.col] &&
+                    newScheme[row][col]
+                ) return;
+            }
+        }
+
+        this.scheme = newScheme;
+    }
 
     render() {
-        this.shapeRenderer.render(this.loc);
-    },
-
-    moveRight() {
-        const shape = this.shapeRenderer.shape.getArr();
-        const n = this.loc.col+SHAPE_WIDTH - PG_WIDTH_IN_BLOCKS;
-        if (n >= 0) {
-            const col = SHAPE_WIDTH - n - 1;
-            for (let i = 0; i < SHAPE_HEIGHT; i++) {
-                if (shape[i][col] >= 1) return;
-            }
-        }
-
-        const loc = {row: this.loc.row, col: this.loc.col+1};
-        for (let row = 0; row < SHAPE_HEIGHT; row++) {
-            for (let col = 0; col < SHAPE_WIDTH; col++) {
-                if (
-                    PG_BLOCKS[loc.row+row][loc.col+col] &&
-                    shape[row][col] >= 1
-                ) return;
-            }
-        }
-
-        this.shapeRenderer.clear(this.loc);
-        this.loc.col++;
-        this.shapeRenderer.render(this.loc);
-    },
-
-    moveLeft() {
-        const shape = this.shapeRenderer.shape.getArr();
-        if (this.loc.col <= 0) {
-            const col = -this.loc.col;
-            for (const row of shape) {
-                if (row[col] >= 1) return;
-            }
-        }
-
-        const loc = {col: this.loc.col-1, row: this.loc.row};
-        for (let row = 0; row < SHAPE_HEIGHT; row++) {
-            for (let col = 0; col < SHAPE_WIDTH; col++) {
-                if (
-                    PG_BLOCKS[loc.row+row][loc.col+col] &&
-                    shape[row][col] >= 1
-                ) return;
-            }
-        }
-
-        this.shapeRenderer.clear(this.loc);
-        this.loc.col--;
-        this.shapeRenderer.render(this.loc);
-    },
-
-    nextDirection() {
-        if (
-            this.loc.col < 0 ||
-            this.loc.col+SHAPE_WIDTH > PG_WIDTH_IN_BLOCKS
-        ) return;
-
-        const nextDirShape = this.shapeRenderer.shape.peekNextDirection();
-        for (let row = 0; row < SHAPE_HEIGHT; row++) {
-            for (let col = 0; col < SHAPE_WIDTH; col++) {
-                if (
-                    nextDirShape[row][col] &&
-                    PG_BLOCKS[this.loc.row+row][this.loc.col+col]
-                ) return;
-            }
-        }
-
-        this.shapeRenderer.clear(this.loc);
-        this.shapeRenderer.shape.nextDirection();
-        this.shapeRenderer.render(this.loc);
-    },
-
-    moveDown() {
-        const n = this.loc.row+SHAPE_HEIGHT - PG_HEIGHT_IN_BLOCKS;
-        if (n >= 0) {
-            const row = this.shapeRenderer.shape.getArr()[SHAPE_HEIGHT - n - 1];
-            for (const block of row) {
-                if (block) {
-                    this.atBottom = true;
-                    return;
+        for (let row = 0; row < this.scheme.length; row++) {
+            for (let col = 0; col < this.scheme[row].length; col++) {
+                if (this.scheme[row][col]) {
+                    gridFillCell(
+                        this.color,
+                        Loc.sum(this.loc, row, col)
+                    );
                 }
             }
         }
+    }
 
-        this.shapeRenderer.clear(this.loc);
-        this.loc.row++;
-        this.shapeRenderer.render(this.loc);
-    },
+    clear() {
+        for (let row = 0; row < this.scheme.length; row++) {
+            for (let col = 0; col < this.scheme[row].length; col++) {
+                if (this.scheme[row][col]) {
+                    gridClearCell(new Loc(this.loc.row+row, this.loc.col+col));
+                }
+            }
+        }
+    }
+
+    #hasIntersection(sRow, sCol) {
+        const nextLoc = Loc.sum(this.loc, sRow, sCol);
+        if (
+            nextLoc.col < 0 ||
+            nextLoc.col+this.scheme[0].length > GRID_COLS_COUNT ||
+            nextLoc.row+this.scheme.length > GRID_ROWS_COUNT
+        ) return true;
+
+        for (let row = 0; row < this.scheme.length; row++) {
+            for (let col = 0; col < this.scheme[row].length; col++) {
+                const cellLoc = Loc.sum(nextLoc, row, col);
+                if (
+                    GRID[cellLoc.row][cellLoc.col] &&
+                    this.scheme[row][col]
+                ) return true;
+            }
+        }
+
+        return false;
+    }
+
+    static *dirGenerator(dirs, dirBeginId) {
+        for (;;) {
+            yield dirs[dirBeginId];
+            if (dirBeginId == 0) {
+                dirBeginId = dirs.length-1;
+            } else {
+                dirBeginId--;
+            }
+        }
+    }
+
+    static random(loc) {
+        const id = Math.floor(Math.random() * Shape.SCHEMES.length);
+        const dirId = Math.floor(Math.random() * Shape.SCHEMES[id].length);
+        const color = [
+            Math.floor(Math.random() * 255),
+            Math.floor(Math.random() * 255),
+            Math.floor(Math.random() * 255),
+        ];
+
+        return new Shape(id, dirId, `rgb(${color.toString()})`, loc);
+    }
+}
+
+function gridFillCell(color, loc) {
+    console.assert(
+        loc.row >= 0 &&
+        loc.row < GRID_ROWS_COUNT &&
+        loc.col >= 0 &&
+        loc.col < GRID_COLS_COUNT
+    );
+
+    GRID_CONTEXT.fillStyle = color;
+    GRID_CONTEXT.fillRect(...loc.asPos(), GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
+}
+
+function gridRender() {
+    GRID_CONTEXT.fillStyle = GRID_BG_COLOR;
+    GRID_CONTEXT.fillRect(GRID_POS.x, GRID_POS.y, GRID_WIDTH, GRID_HEIGHT);
+
+    for (let row = 0; row < GRID_ROWS_COUNT; row++) {
+        for (let col = 0; col < GRID_COLS_COUNT; col++) {
+            if (GRID[row][col]) {
+                gridFillCell("magenta", new Loc(row, col));
+            }
+        }
+    }
+}
+
+function gridClearCell(loc) {
+    console.assert(
+        loc.row >= 0 &&
+        loc.row < GRID_ROWS_COUNT &&
+        loc.col >= 0 &&
+        loc.col < GRID_COLS_COUNT
+    );
+
+    GRID_CONTEXT.fillStyle = GRID_BG_COLOR;
+    GRID_CONTEXT.fillRect(...loc.asPos(), GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
+}
+
+function gridAdd(shape) {
+    console.assert(
+        shape.loc.row >= 0 &&
+        shape.loc.row < GRID_ROWS_COUNT &&
+        shape.loc.col >= 0 &&
+        shape.loc.col < GRID_COLS_COUNT
+    );
+
+    for (let row = 0; row < shape.scheme.length; row++) {
+        for (let col = 0; col < shape.scheme[row].length; col++) {
+            if (shape.scheme[row][col]) {
+                GRID[shape.loc.row+row][shape.loc.col+col] = 1;
+            }
+        }
+    }
+}
+
+
+
+const PLAYER = {
+    shape: Shape.random(new Loc()),
+
+    eventListener(e) {
+        if (e.code === "KeyH") {
+            PLAYER.shape.clear();
+            PLAYER.shape.stepLeft();
+            PLAYER.shape.render();
+        }
+
+        if (e.code === "KeyJ") {
+            PLAYER.shape.clear();
+            PLAYER.shape.stepDown();
+            PLAYER.shape.render();
+        }
+
+        if (e.code === "KeyL") {
+            PLAYER.shape.clear();
+            PLAYER.shape.stepRight();
+            PLAYER.shape.render();
+        }
+
+        if (e.code === "KeyK") {
+            PLAYER.shape.clear();
+            PLAYER.shape.flip();
+            PLAYER.shape.render();
+        }
+    }
 };
 
-function renderBlock(loc, bg0, bg1) {
-    CONTEXT.fillStyle = bg0;
-    CONTEXT.fillRect(PG_POS.x + loc.col*BLOCK_WIDTH, PG_POS.y + loc.row*BLOCK_HEIGHT, BLOCK_WIDTH, BLOCK_HEIGHT);
-    CONTEXT.fillStyle = bg1;
-    CONTEXT.fillRect(
-        PG_POS.x + loc.col*BLOCK_WIDTH + BORDER,
-        PG_POS.y + loc.row*BLOCK_HEIGHT + BORDER,
-        INNER_BLOCK_WIDTH,
-        INNER_BLOCK_HEIGHT
-    );
-}
 
-function clearBlock(loc) {
-    CONTEXT.fillStyle = PG_COLOR;
-    CONTEXT.fillRect(
-        PG_POS.x+loc.col*BLOCK_WIDTH,
-        PG_POS.y+loc.row*BLOCK_HEIGHT,
-        BLOCK_WIDTH,
-        BLOCK_HEIGHT,
-    );
-}
+(() => {
+    GRID[GRID_ROWS_COUNT-1] = [0,1,1,1];
+    gridRender();
 
-// TODO: position here instand of in player
-function Shape(shapeId, shapeDirectionId = 0) {
-    return {
-        directions:  SHAPE_DIRECTIONS[shapeId],
-        directionId: shapeDirectionId,
+    document.addEventListener("keypress", PLAYER.eventListener);
 
-        getArr() {
-            return this.directions[this.directionId];
-        },
-
-        nextDirection() {
-            this.directionId+1 == this.directions.length
-                ? this.directionId = 0
-                : this.directionId++;
-        },
-
-        peekNextDirection() {
-            return this.directionId+1 == this.directions.length
-                ? this.directions[0]
-                : this.directions[this.directionId+1];
-        }
-    };
-}
-
-// TODO: random direction
-function generateShapeRenderer() {
-    let bg1 = [
-        Math.floor(Math.random()*255), 
-        Math.floor(Math.random()*255), 
-        Math.floor(Math.random()*255)
-    ];
-    let bg0 = bg1.map(e => e *= 0.5);
-
-    return {
-        shape: Shape(Math.floor(Math.random()*SHAPE_DIRECTIONS.length)),
-        blockBg0: `rgb(${bg0.toString()})`,
-        blockBg1: `rgb(${bg1.toString()})`,
-
-        render(loc) {
-            let shape = this.shape.getArr();
-            for (let y = 0; y < SHAPE_HEIGHT; y++) {
-                for (let x = 0; x < SHAPE_WIDTH; x++) {
-                    if (shape[y][x]) {
-                        renderBlock(
-                            {row: loc.row+y, col: loc.col+x},
-                            this.blockBg0,
-                            this.blockBg1,
-                        );
-                    }
+    const i = setInterval(() => {
+        PLAYER.shape.clear();
+            if (!PLAYER.shape.stepDown()) {
+                if (PLAYER.shape.loc.row == 0) {
+                    console.log("GAME OVER!");
+                    clearInterval(i);
+                    document.removeEventListener("keypress", PLAYER.eventListener);
+                    return;
                 }
+
+                gridAdd(PLAYER.shape)
+                gridRender();
+                PLAYER.shape = Shape.random(new Loc());
             }
-        },
-
-        clear(loc) {
-            let shape = this.shape.getArr();
-            for (let y = 0; y < SHAPE_HEIGHT; y++) {
-                for (let x = 0; x < SHAPE_WIDTH; x++) {
-                    if (!shape[y][x]) continue;
-                    clearBlock({row: loc.row+y, col: loc.col+x});
-                }
-            }
-        },
-    };
-}
-
-function renderPg() {
-    CONTEXT.clearRect(PG_POS.x, PG_POS.y, PG_WIDTH, PG_HEIGHT);
-
-    CONTEXT.fillStyle = PG_COLOR;
-    CONTEXT.fillRect(PG_POS.x, PG_POS.y, PG_WIDTH, PG_HEIGHT);
-
-    for (let y = 0; y < PG_HEIGHT_IN_BLOCKS; y++) {
-        for (let x = 0; x < PG_WIDTH_IN_BLOCKS; x++) {
-            const block = PG_BLOCKS[y][x];
-            if (!block) continue;
-            renderBlock({row: y, col: x}, block.bg0, block.bg1);
-        }
-    }
-}
-
-
-
-
-document.addEventListener("keypress", e => {
-    switch (e.code) {
-        case "KeyH":
-            PLAYER.moveLeft();
-            break;
-
-        case "KeyL":
-            PLAYER.moveRight();
-            break;
-
-        case "KeyK":
-            PLAYER.nextDirection();
-            break;
-    }
-});
-
-const palette = {bg0: "#aa0000", bg1:  "#ff0000"};
-PG_BLOCKS[0][0] = palette;
-PG_BLOCKS[1][0] = palette;
-PG_BLOCKS[1][1] = palette;
-
-PG_BLOCKS[0][PG_WIDTH_IN_BLOCKS-1] = palette;
-PG_BLOCKS[1][PG_WIDTH_IN_BLOCKS-1] = palette;
-PG_BLOCKS[1][PG_WIDTH_IN_BLOCKS-2] = palette;
-
-setInterval(() => {
-    PLAYER.moveDown();
-}, 1000);
-
-renderPg();
-PLAYER.render();
+        PLAYER.shape.render();
+    }, 1000);
+})();
 
 
 
