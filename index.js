@@ -313,3 +313,9 @@ function playerAtBottomCallback() {
     gridRender();
     PLAYER.shape = Shape.random(new Loc());
 }
+
+
+
+
+// TODO: add hud
+// TODO: add particles
