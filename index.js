@@ -64,58 +64,64 @@ class Palette {
 class Shape {
     static SCHEMES = [
         [
-            [[1,0],
+            [[1,1],
              [1,1]],
-
+        ],
+        [
+            [[1,1,0],
+             [0,1,1]],
             [[0,1],
-             [1,1]],
-
-            [[1,1],
-             [0,1]],
-
-            [[1,1],
+             [1,1],
              [1,0]],
+        ],
+        [
+            [[0,1,0],
+             [1,1,1]],
+            [[0,1,0],
+             [0,1,1],
+             [0,1,0]],
+            [[0,0,0],
+             [1,1,1],
+             [0,1,0]],
+            [[0,1,0],
+             [1,1,0],
+             [0,1,0]]
         ]
     ];
 
-    constructor(id, dirId, palette, loc) {
-        this.dirGen = Shape.dirGenerator(Shape.SCHEMES[id], dirId);
-        this.scheme = this.dirGen.next().value;
+    constructor(schemeId, dirId, palette, loc) {
+        this.dirs = Shape.SCHEMES[schemeId];
+        this.dirId = dirId;
+        this.scheme = this.dirs[dirId];
         this.loc = loc;
         this.palette = palette;
     }
 
     stepLeft() {
-        if (this.#hasIntersection(0, -1)) return false;
+        if (this.#hasIntersection(this.scheme, 0, -1)) return false;
         this.loc.col -= 1;
         return true;
     }
 
     stepRight() {
-        if (this.#hasIntersection(0, 1)) return false;
+        if (this.#hasIntersection(this.scheme, 0, 1)) return false;
         this.loc.col += 1;
         return true;
     }
 
     stepDown() {
-        if (this.#hasIntersection(1, 0)) return false;
+        if (this.#hasIntersection(this.scheme, 1, 0)) return false;
         this.loc.row += 1;
         return true;
     }
 
     flip() {
-        const newScheme = this.dirGen.next().value;
-        for (let row = 0; row < newScheme.length; row++) {
-            for (let col = 0; col < newScheme[row].length; col++) {
-                const cellLoc = Loc.sum(this.loc, row, col);
-                if (
-                    GRID[cellLoc.row][cellLoc.col] &&
-                    newScheme[row][col]
-                ) return;
-            }
-        }
+        const newId = this.dirId+1 == this.dirs.length ? 0 : this.dirId+1;
+        const newScheme = this.dirs[newId];
+        if (this.#hasIntersection(newScheme, 0, 0)) return;
 
         this.scheme = newScheme;
+        this.dirId = newId;
     }
 
     render() {
@@ -141,36 +147,22 @@ class Shape {
         }
     }
 
-    #hasIntersection(sRow, sCol) {
+    #hasIntersection(scheme, sRow, sCol) {
         const nextLoc = Loc.sum(this.loc, sRow, sCol);
-        if (
-            nextLoc.col < 0 ||
-            nextLoc.col+this.scheme[0].length > GRID_COLS_COUNT ||
-            nextLoc.row+this.scheme.length > GRID_ROWS_COUNT
-        ) return true;
-
-        for (let row = 0; row < this.scheme.length; row++) {
-            for (let col = 0; col < this.scheme[row].length; col++) {
-                const cellLoc = Loc.sum(nextLoc, row, col);
+        for (let row = 0; row < scheme.length; row++) {
+            for (let col = 0; col < scheme[row].length; col++) {
+                const cellGlobalLoc = Loc.sum(nextLoc, row, col);
                 if (
-                    GRID[cellLoc.row][cellLoc.col] &&
-                    this.scheme[row][col]
+                    scheme[row][col] &&
+                    (cellGlobalLoc.col < 0 ||
+                    cellGlobalLoc.col == GRID_COLS_COUNT ||
+                    cellGlobalLoc.row == GRID_ROWS_COUNT ||
+                    GRID[cellGlobalLoc.row][cellGlobalLoc.col])
                 ) return true;
             }
         }
 
         return false;
-    }
-
-    static *dirGenerator(dirs, dirBeginId) {
-        for (;;) {
-            yield dirs[dirBeginId];
-            if (dirBeginId == 0) {
-                dirBeginId = dirs.length-1;
-            } else {
-                dirBeginId--;
-            }
-        }
     }
 
     static random(loc) {
@@ -228,13 +220,6 @@ function gridClearCell(loc) {
 }
 
 function gridAdd(shape) {
-    console.assert(
-        shape.loc.row >= 0 &&
-        shape.loc.row < GRID_ROWS_COUNT &&
-        shape.loc.col >= 0 &&
-        shape.loc.col < GRID_COLS_COUNT
-    );
-
     for (let row = 0; row < shape.scheme.length; row++) {
         for (let col = 0; col < shape.scheme[row].length; col++) {
             if (shape.scheme[row][col]) {
