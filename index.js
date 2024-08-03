@@ -19,210 +19,206 @@ const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
 const GRID_BG_COLOR    = "#101010";
 const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GRID_COLS_COUNT).fill(0));
+const DARKEN_FACTOR    = 0.1;
+const SHAPE_SCHEMES = [
+    [
+        [[1,1],
+         [1,1]],
+    ],
+    [
+        [[1,1,0],
+         [0,1,1]],
+        [[0,1],
+         [1,1],
+         [1,0]],
+    ],
+    [
+        [[0,1,1],
+         [1,1,0]],
+        [[1,0],
+         [1,1],
+         [0,1]],
+    ],
+    [
+        [[0,1,0],
+         [1,1,1]],
+        [[0,1,0],
+         [0,1,1],
+         [0,1,0]],
+        [[0,0,0],
+         [1,1,1],
+         [0,1,0]],
+        [[0,1,0],
+         [1,1,0],
+         [0,1,0]]
+    ],
+    [
+        [[1,0,0],
+         [1,1,1]],
+        [[1,1],
+         [1,0],
+         [1,0]],
+        [[1,1,1],
+         [0,0,1]],
+        [[0,1],
+         [0,1],
+         [1,1]]
+    ],
+    [
+        [[0,0,1],
+         [1,1,1]],
+        [[1,0],
+         [1,0],
+         [1,1]],
+        [[1,1,1],
+         [1,0,0]],
+        [[1,1],
+         [0,1],
+         [0,1]],
+    ],
+    [
+        [[0,0,0,0],
+         [1,1,1,1]],
+        [[0,1],
+         [0,1],
+         [0,1],
+         [0,1]],
+    ]
+];
 
-class Loc {
-    constructor(row = 0, col = 0) {
-        this.row = row;
-        this.col = col;
-    }
 
-    asArr() {
-        return [this.row, this.col];
-    }
 
-    asPos() {
-        return [
-            GRID_POS.x + this.col*GRID_CELL_WIDTH,
-            GRID_POS.y + this.row*GRID_CELL_HEIGHT
-        ];
-    }
-
-    static sum(l1, row, col) {
-        return new Loc(l1.row+row, l1.col+col);
-    }
+function Loc(row = 0, col = 0) {
+    this.row = row;
+    this.col = col;
 }
 
-class Palette {
-    static DARKEN_FACTOR = 0.1;
-
-    constructor(mainColorRgb) {
-        let secondColorRgb = { ...mainColorRgb };
-        secondColorRgb.r *= Palette.DARKEN_FACTOR;
-        secondColorRgb.g *= Palette.DARKEN_FACTOR;
-        secondColorRgb.b *= Palette.DARKEN_FACTOR;
-
-        this.color1 = mainColorRgb;
-        this.color2 = secondColorRgb;
-    }
-
-    toStringColor0() {
-        return `rgb(${this.color1.r}, ${this.color1.g}, ${this.color1.b})`;
-    }
-
-    toStringColor1() {
-        return `rgb(${this.color2.r}, ${this.color2.g}, ${this.color2.b})`;
-    }
+function Palette(mainColor) {
+    this.color1 = mainColor;
+    this.color0 = Object.create(mainColor);
+    this.color0.r *= DARKEN_FACTOR;
+    this.color0.g *= DARKEN_FACTOR;
+    this.color0.b *= DARKEN_FACTOR;
 }
 
-class Shape {
-    static SCHEMES = [
-        [
-            [[1,1],
-             [1,1]],
-        ],
-        [
-            [[1,1,0],
-             [0,1,1]],
-            [[0,1],
-             [1,1],
-             [1,0]],
-        ],
-        [
-            [[0,1,1],
-             [1,1,0]],
-            [[1,0],
-             [1,1],
-             [0,1]],
-        ],
-        [
-            [[0,1,0],
-             [1,1,1]],
-            [[0,1,0],
-             [0,1,1],
-             [0,1,0]],
-            [[0,0,0],
-             [1,1,1],
-             [0,1,0]],
-            [[0,1,0],
-             [1,1,0],
-             [0,1,0]]
-        ],
-        [
-            [[1,0,0],
-             [1,1,1]],
-            [[1,1],
-             [1,0],
-             [1,0]],
-            [[1,1,1],
-             [0,0,1]],
-            [[0,1],
-             [0,1],
-             [1,1]]
-        ],
-        [
-            [[0,0,1],
-             [1,1,1]],
-            [[1,0],
-             [1,0],
-             [1,1]],
-            [[1,1,1],
-             [1,0,0]],
-            [[1,1],
-             [0,1],
-             [0,1]],
-        ],
-        [
-            [[0,0,0,0],
-             [1,1,1,1]],
-            [[0,1],
-             [0,1],
-             [0,1],
-             [0,1]],
-        ]
+function Shape(schemeId, dirId, palette, loc) {
+    this.dirs = SHAPE_SCHEMES[schemeId];
+    this.dirId = dirId;
+    this.scheme = this.dirs[dirId];
+    this.loc = loc;
+    this.palette = palette;
+}
+
+
+
+Loc.sum = function(l1, row, col) {
+    return new Loc(l1.row+row, l1.col+col);
+};
+
+Loc.prototype.asArr = function() {
+    return [this.row, this.col];
+};
+
+Loc.prototype.asPos = function() {
+    return [
+        GRID_POS.x + this.col*GRID_CELL_WIDTH,
+        GRID_POS.y + this.row*GRID_CELL_HEIGHT
     ];
+};
 
-    constructor(schemeId, dirId, palette, loc) {
-        this.dirs = Shape.SCHEMES[schemeId];
-        this.dirId = dirId;
-        this.scheme = this.dirs[dirId];
-        this.loc = loc;
-        this.palette = palette;
-    }
+Palette.prototype.toStringColor0 = function() {
+    return `rgb(${this.color0.r}, ${this.color0.g}, ${this.color0.b})`;
+};
 
-    stepLeft() {
-        if (this.#hasIntersection(this.scheme, 0, -1)) return false;
-        this.loc.col -= 1;
-        return true;
-    }
+Palette.prototype.toStringColor1 = function() {
+    return `rgb(${this.color1.r}, ${this.color1.g}, ${this.color1.b})`;
+};
 
-    stepRight() {
-        if (this.#hasIntersection(this.scheme, 0, 1)) return false;
-        this.loc.col += 1;
-        return true;
-    }
+Shape.random = function(loc) {
+    const id = Math.floor(Math.random() * SHAPE_SCHEMES.length);
+    const dirId = Math.floor(Math.random() * SHAPE_SCHEMES[id].length);
+    const color = {
+        r: Math.floor(Math.random() * 255),
+        g: Math.floor(Math.random() * 255),
+        b: Math.floor(Math.random() * 255),
+    };
 
-    stepDown() {
-        if (this.#hasIntersection(this.scheme, 1, 0)) return false;
-        this.loc.row += 1;
-        return true;
-    }
+    return new Shape(id, dirId, new Palette(color), loc);
+};
 
-    isAtBottom() {
-        return this.#hasIntersection(this.scheme, 1, 0);
-    }
+Shape.prototype.stepLeft = function() {
+    if (hasIntersection(this.scheme, Loc.sum(this.loc, 0, -1))) return false;
+    this.loc.col -= 1;
+    return true;
+};
 
-    flip() {
-        const newId = this.dirId+1 == this.dirs.length ? 0 : this.dirId+1;
-        const newScheme = this.dirs[newId];
-        if (this.#hasIntersection(newScheme, 0, 0)) return;
+Shape.prototype.stepRight = function() {
+    if (hasIntersection(this.scheme, Loc.sum(this.loc, 0, 1))) return false;
+    this.loc.col += 1;
+    return true;
+};
 
-        this.scheme = newScheme;
-        this.dirId = newId;
-    }
+Shape.prototype.stepDown = function() {
+    if (hasIntersection(this.scheme, Loc.sum(this.loc, 1, 0))) return false;
+    this.loc.row += 1;
+    return true;
+};
 
-    render() {
-        for (let row = 0; row < this.scheme.length; row++) {
-            for (let col = 0; col < this.scheme[row].length; col++) {
-                if (this.scheme[row][col]) {
-                    gridFillCell(
-                        this.palette,
-                        Loc.sum(this.loc, row, col)
-                    );
-                }
+Shape.prototype.isAtBottom = function() {
+    return hasIntersection(this.scheme, Loc.sum(this.loc, 1, 0));
+};
+
+Shape.prototype.flip = function() {
+    const newId = this.dirId+1 == this.dirs.length ? 0 : this.dirId+1;
+    const newScheme = this.dirs[newId];
+    if (hasIntersection(newScheme, this.loc)) return;
+
+    this.scheme = newScheme;
+    this.dirId = newId;
+};
+
+Shape.prototype.render = function() {
+    for (let row = 0; row < this.scheme.length; row++) {
+        for (let col = 0; col < this.scheme[row].length; col++) {
+            if (this.scheme[row][col]) {
+                gridFillCell(
+                    this.palette,
+                    Loc.sum(this.loc, row, col)
+                );
             }
         }
     }
+};
 
-    clear() {
-        for (let row = 0; row < this.scheme.length; row++) {
-            for (let col = 0; col < this.scheme[row].length; col++) {
-                if (this.scheme[row][col]) {
-                    gridClearCell(new Loc(this.loc.row+row, this.loc.col+col));
-                }
+Shape.prototype.clear = function() {
+    console.log();
+    for (let row = 0; row < this.scheme.length; row++) {
+        for (let col = 0; col < this.scheme[row].length; col++) {
+            if (this.scheme[row][col]) {
+                gridClearCell(new Loc(this.loc.row+row, this.loc.col+col));
             }
         }
     }
+};
 
-    #hasIntersection(scheme, sRow, sCol) {
-        const nextLoc = Loc.sum(this.loc, sRow, sCol);
-        for (let row = 0; row < scheme.length; row++) {
-            for (let col = 0; col < scheme[row].length; col++) {
-                const cellGlobalLoc = Loc.sum(nextLoc, row, col);
-                if (
-                    scheme[row][col] &&
-                    (cellGlobalLoc.col < 0 ||
-                    cellGlobalLoc.col == GRID_COLS_COUNT ||
-                    cellGlobalLoc.row == GRID_ROWS_COUNT ||
-                    GRID[cellGlobalLoc.row][cellGlobalLoc.col])
-                ) return true;
-            }
+
+
+function hasIntersection(scheme, loc) {
+    for (let row = 0; row < scheme.length; row++) {
+        for (let col = 0; col < scheme[row].length; col++) {
+            const cellGlobalLoc = Loc.sum(loc, row, col);
+            if (
+                scheme[row][col] &&
+                (cellGlobalLoc.col < 0 ||
+                cellGlobalLoc.col == GRID_COLS_COUNT ||
+                cellGlobalLoc.row == GRID_ROWS_COUNT ||
+                GRID[cellGlobalLoc.row][cellGlobalLoc.col])
+            ) return true;
         }
-
-        return false;
     }
 
-    static random(loc) {
-        const id = Math.floor(Math.random() * Shape.SCHEMES.length);
-        const dirId = Math.floor(Math.random() * Shape.SCHEMES[id].length);
-        const color = {
-            r: Math.floor(Math.random() * 255),
-            g: Math.floor(Math.random() * 255),
-            b: Math.floor(Math.random() * 255),
-        };
-
-        return new Shape(id, dirId, new Palette(color), loc);
-    }
-}
+    return false;
+};
 
 function gridFillCell(palette, loc) {
     console.assert(
@@ -233,9 +229,9 @@ function gridFillCell(palette, loc) {
     );
 
     const pos = loc.asPos();
-    GRID_CONTEXT.fillStyle = palette.toStringColor1();
-    GRID_CONTEXT.fillRect(...pos, GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
     GRID_CONTEXT.fillStyle = palette.toStringColor0();
+    GRID_CONTEXT.fillRect(...pos, GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
+    GRID_CONTEXT.fillStyle = palette.toStringColor1();
     GRID_CONTEXT.fillRect(
         pos[0]+GRID_CELL_BORDER,
         pos[1]+GRID_CELL_BORDER,
