@@ -14,6 +14,7 @@ const GRID_ROWS_COUNT  = 10;
 const GRID_COLS_COUNT  = 10;
 const GRID_CELL_WIDTH  = 50;
 const GRID_CELL_HEIGHT = 50;
+const GRID_CELL_BORDER = 1;
 const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
 const GRID_BG_COLOR    = "#101010";
@@ -42,11 +43,13 @@ class Loc {
 }
 
 class Palette {
+    static DARKEN_FACTOR = 0.1;
+
     constructor(mainColorRgb) {
         let secondColorRgb = { ...mainColorRgb };
-        secondColorRgb.r -= 0x44;
-        secondColorRgb.g -= 0x44;
-        secondColorRgb.b -= 0x44;
+        secondColorRgb.r *= Palette.DARKEN_FACTOR;
+        secondColorRgb.g *= Palette.DARKEN_FACTOR;
+        secondColorRgb.b *= Palette.DARKEN_FACTOR;
 
         this.color1 = mainColorRgb;
         this.color2 = secondColorRgb;
@@ -190,7 +193,12 @@ function gridFillCell(palette, loc) {
     GRID_CONTEXT.fillStyle = palette.toStringColor1();
     GRID_CONTEXT.fillRect(...pos, GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
     GRID_CONTEXT.fillStyle = palette.toStringColor0();
-    GRID_CONTEXT.fillRect(pos[0]+10, pos[1]+10, GRID_CELL_WIDTH-2*10, GRID_CELL_HEIGHT-2*10);
+    GRID_CONTEXT.fillRect(
+        pos[0]+GRID_CELL_BORDER,
+        pos[1]+GRID_CELL_BORDER,
+        GRID_CELL_WIDTH-2*GRID_CELL_BORDER,
+        GRID_CELL_HEIGHT-2*GRID_CELL_BORDER
+    );
 }
 
 function gridRender() {
