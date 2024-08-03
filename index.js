@@ -118,6 +118,10 @@ class Shape {
         return true;
     }
 
+    isAtBottom() {
+        return this.#hasIntersection(this.scheme, 1, 0);
+    }
+
     flip() {
         const newId = this.dirId+1 == this.dirs.length ? 0 : this.dirId+1;
         const newScheme = this.dirs[newId];
@@ -277,7 +281,9 @@ const PLAYER = {
 
     const i = setInterval(() => {
         PLAYER.shape.clear();
-            if (!PLAYER.shape.stepDown()) {
+            PLAYER.shape.stepDown()
+            if (PLAYER.shape.isAtBottom()) {
+                console.log("bottom");
                 if (PLAYER.shape.loc.row == 0) {
                     console.log("GAME OVER!");
                     clearInterval(i);
