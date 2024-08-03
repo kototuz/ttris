@@ -18,7 +18,7 @@ const GRID_CELL_BORDER = 1;
 const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
 const GRID_BG_COLOR    = "#101010";
-const GRID             = Array.from({length: GRID_HEIGHT}, e => new Array());
+const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GRID_COLS_COUNT).fill(0));
 
 class Loc {
     constructor(row = 0, col = 0) {
@@ -231,6 +231,19 @@ function gridClearCell(loc) {
     GRID_CONTEXT.fillRect(...loc.asPos(), GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
 }
 
+function gridRemoveFilledLines() {
+    let count = 0;
+    GRID.forEach((row, idx) => {
+        if (row.every(e => e !== 0)) {
+            GRID.splice(idx, 1);
+            GRID.unshift(new Array(GRID_COLS_COUNT).fill(0));
+            count++;
+        }
+    });
+
+    return count;
+}
+
 function gridAdd(shape) {
     for (let row = 0; row < shape.scheme.length; row++) {
         for (let col = 0; col < shape.scheme[row].length; col++) {
@@ -296,6 +309,7 @@ function playerAtBottomCallback() {
     }
 
     gridAdd(PLAYER.shape)
+    gridRemoveFilledLines();
     gridRender();
     PLAYER.shape = Shape.random(new Loc());
 }
