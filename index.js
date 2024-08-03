@@ -256,6 +256,9 @@ const PLAYER = {
         if (e.code === "KeyJ") {
             PLAYER.shape.clear();
             PLAYER.shape.stepDown();
+            if (PLAYER.shape.isAtBottom()) {
+                playerAtBottomCallback();
+            }
             PLAYER.shape.render();
         }
 
@@ -273,34 +276,26 @@ const PLAYER = {
     }
 };
 
+gridRender();
+document.addEventListener("keypress", PLAYER.eventListener);
+const GAME_LOOP = setInterval(() => {
+    PLAYER.shape.clear();
+        PLAYER.shape.stepDown()
+        if (PLAYER.shape.isAtBottom()) {
+            playerAtBottomCallback();
+        }
+    PLAYER.shape.render();
+}, 1000);
 
-(() => {
+function playerAtBottomCallback() {
+    if (PLAYER.shape.loc.row == 0) {
+        console.log("GAME OVER!");
+        document.removeEventListener("keypress", PLAYER.eventListener);
+        clearInterval(GAME_LOOP);
+        return;
+    }
+
+    gridAdd(PLAYER.shape)
     gridRender();
-
-    document.addEventListener("keypress", PLAYER.eventListener);
-
-    const i = setInterval(() => {
-        PLAYER.shape.clear();
-            PLAYER.shape.stepDown()
-            if (PLAYER.shape.isAtBottom()) {
-                console.log("bottom");
-                if (PLAYER.shape.loc.row == 0) {
-                    console.log("GAME OVER!");
-                    clearInterval(i);
-                    document.removeEventListener("keypress", PLAYER.eventListener);
-                    return;
-                }
-
-                gridAdd(PLAYER.shape)
-                gridRender();
-                PLAYER.shape = Shape.random(new Loc());
-            }
-        PLAYER.shape.render();
-    }, 1000);
-})();
-
-
-
-// TODO: player points
-// TODO: animations for blocks
-// TODO: maybe particles
+    PLAYER.shape = Shape.random(new Loc());
+}
