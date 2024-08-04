@@ -11,6 +11,7 @@ const GRID_POS         = {x: 0, y: 0};
 const GRID_BG_COLOR    = "#101010";
 const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GRID_COLS_COUNT).fill(0));
 const DARKEN_FACTOR    = 0.1;
+const PLAYER_SPAWN_POS = new Loc(0, Math.floor(GRID_COLS_COUNT/2));
 
 const SHAPE_SCHEMES = [
     [
@@ -113,7 +114,7 @@ function startGame() {
     console.assert(canvas, "Canvas is not defined");
     GRID_CONTEXT = canvas.getContext("2d");
     GAME_LOOP_INTERVAL_ID = setInterval(gameLoop, 1000);
-    PLAYER = { shape: Shape.random(new Loc()) };
+    PLAYER = { shape: Shape.random(PLAYER_SPAWN_POS) };
     document.addEventListener("keypress", playerEventListener);
     gridRender();
 }
@@ -299,7 +300,7 @@ function playerAtBottomCallback() {
     gridAdd(PLAYER.shape)
     gridRemoveFilledLines();
     gridRender();
-    PLAYER.shape = Shape.random(new Loc());
+    PLAYER.shape = Shape.random(PLAYER_SPAWN_POS);
 }
 
 function gameLoopPause() {
