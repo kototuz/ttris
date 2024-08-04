@@ -314,13 +314,13 @@ const PLAYER = {
 };
 
 gridRender();
-document.addEventListener("keypress", PLAYER.eventListener);
+document.addEventListener("keydown", PLAYER.eventListener);
 const GAME_LOOP = setInterval(() => {
     PLAYER.shape.clear();
-        PLAYER.shape.step(new Loc(1, 0));
-        if (PLAYER.shape.isAtBottom()) {
+        if (!PLAYER.shape.step(new Loc(1, 0))) {
             playerAtBottomCallback();
         }
+    // PLAYER.shape.isAtBottom()
     PLAYER.shape.render();
 }, 1000);
 
