@@ -284,32 +284,43 @@ const PLAYER = {
     shape: Shape.random(new Loc()),
 
     eventListener(e) {
-        if (e.code === "KeyH") {
-            PLAYER.shape.clear();
-            PLAYER.shape.step(new Loc(0, -1));
-            PLAYER.shape.render();
+        PLAYER.shape.clear();
+
+        let loc = new Loc();
+        switch (e.code) {
+            case "KeyH":
+                loc.col = -1;
+                loc.row = 0;
+                PLAYER.shape.step(loc);
+                break;
+
+            case "KeyJ":
+                loc.col = 0;
+                loc.row = 1;
+                PLAYER.shape.step(loc);
+                if (PLAYER.shape.isAtBottom()) {
+                    playerAtBottomCallback();
+                }
+                break;
+
+            case "KeyL":
+                loc.col = 1;
+                loc.row = 0;
+                PLAYER.shape.step(loc);
+                break;
+
+            case "KeyK":
+                PLAYER.shape.flip();
+                break;
+
+            case "Space":
+                loc.col = 0;
+                loc.row = 1;
+                while (PLAYER.shape.step(loc)) {}
+                break;
         }
 
-        if (e.code === "KeyJ") {
-            PLAYER.shape.clear();
-            PLAYER.shape.step(new Loc(1, 0));
-            if (PLAYER.shape.isAtBottom()) {
-                playerAtBottomCallback();
-            }
-            PLAYER.shape.render();
-        }
-
-        if (e.code === "KeyL") {
-            PLAYER.shape.clear();
-            PLAYER.shape.step(new Loc(0, 1));
-            PLAYER.shape.render();
-        }
-
-        if (e.code === "KeyK") {
-            PLAYER.shape.clear();
-            PLAYER.shape.flip();
-            PLAYER.shape.render();
-        }
+        PLAYER.shape.render();
     }
 };
 
