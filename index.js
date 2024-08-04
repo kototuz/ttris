@@ -291,8 +291,8 @@ function gridAdd(shape) {
 function playerAtBottomCallback() {
     if (PLAYER.shape.loc.row == 0) {
         console.log("GAME OVER!");
-        document.removeEventListener("keypress", PLAYER.eventListener);
-        clearInterval(GAME_LOOP);
+        document.removeEventListener("keypress", playerEventListener);
+        clearInterval(GAME_LOOP_INTERVAL_ID);
         return;
     }
 
@@ -352,6 +352,7 @@ function playerEventListener(e) {
             loc.col = 0;
             loc.row = 1;
             while (PLAYER.shape.step(loc)) {}
+            playerAtBottomCallback();
             break;
     }
 
