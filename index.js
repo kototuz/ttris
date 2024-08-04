@@ -143,23 +143,15 @@ Shape.random = function(loc) {
     return new Shape(id, dirId, new Palette(color), loc);
 };
 
-Shape.prototype.stepLeft = function() {
-    if (hasIntersection(this.scheme, Loc.sum(this.loc, 0, -1))) return false;
-    this.loc.col -= 1;
-    return true;
-};
+Shape.prototype.step = function(stepLoc) {
+    const newLoc = Loc.sum(this.loc, ...stepLoc.asArr());
+    if (hasIntersection(this.scheme, newLoc)) {
+        return false;
+    }
 
-Shape.prototype.stepRight = function() {
-    if (hasIntersection(this.scheme, Loc.sum(this.loc, 0, 1))) return false;
-    this.loc.col += 1;
+    this.loc = newLoc;
     return true;
-};
-
-Shape.prototype.stepDown = function() {
-    if (hasIntersection(this.scheme, Loc.sum(this.loc, 1, 0))) return false;
-    this.loc.row += 1;
-    return true;
-};
+}
 
 Shape.prototype.isAtBottom = function() {
     return hasIntersection(this.scheme, Loc.sum(this.loc, 1, 0));
@@ -294,13 +286,13 @@ const PLAYER = {
     eventListener(e) {
         if (e.code === "KeyH") {
             PLAYER.shape.clear();
-            PLAYER.shape.stepLeft();
+            PLAYER.shape.step(new Loc(0, -1));
             PLAYER.shape.render();
         }
 
         if (e.code === "KeyJ") {
             PLAYER.shape.clear();
-            PLAYER.shape.stepDown();
+            PLAYER.shape.step(new Loc(1, 0));
             if (PLAYER.shape.isAtBottom()) {
                 playerAtBottomCallback();
             }
@@ -309,7 +301,7 @@ const PLAYER = {
 
         if (e.code === "KeyL") {
             PLAYER.shape.clear();
-            PLAYER.shape.stepRight();
+            PLAYER.shape.step(new Loc(0, 1));
             PLAYER.shape.render();
         }
 
@@ -325,7 +317,7 @@ gridRender();
 document.addEventListener("keypress", PLAYER.eventListener);
 const GAME_LOOP = setInterval(() => {
     PLAYER.shape.clear();
-        PLAYER.shape.stepDown()
+        PLAYER.shape.step(new Loc(1, 0));
         if (PLAYER.shape.isAtBottom()) {
             playerAtBottomCallback();
         }
