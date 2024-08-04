@@ -13,6 +13,10 @@ const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GR
 const DARKEN_FACTOR    = 0.1;
 const PLAYER_SPAWN_POS = new Loc(0, Math.floor(GRID_COLS_COUNT/2));
 
+const STEP_LEFT  = new Loc(0, -1);
+const STEP_RIGHT = new Loc(0, 1);
+const STEP_DOWN  = new Loc(1, 0);
+
 const SHAPE_SCHEMES = [
     [
         [[1,1],
@@ -313,7 +317,7 @@ function gameLoopResume() {
 
 function gameLoop() {
     PLAYER.shape.clear();
-    if (!PLAYER.shape.step(new Loc(1, 0))) {
+    if (!PLAYER.shape.step(STEP_DOWN)) {
         playerAtBottomCallback();
     }
     PLAYER.shape.render();
@@ -322,27 +326,20 @@ function gameLoop() {
 function playerEventListener(e) {
     PLAYER.shape.clear();
 
-    let loc = new Loc();
     switch (e.code) {
         case "KeyH":
-            loc.col = -1;
-            loc.row = 0;
-            PLAYER.shape.step(loc);
+            PLAYER.shape.step(STEP_LEFT);
             break;
 
         case "KeyJ":
-            loc.col = 0;
-            loc.row = 1;
-            PLAYER.shape.step(loc);
+            PLAYER.shape.step(STEP_DOWN);
             if (PLAYER.shape.isAtBottom()) {
                 playerAtBottomCallback();
             }
             break;
 
         case "KeyL":
-            loc.col = 1;
-            loc.row = 0;
-            PLAYER.shape.step(loc);
+            PLAYER.shape.step(STEP_RIGHT);
             break;
 
         case "KeyK":
@@ -350,9 +347,7 @@ function playerEventListener(e) {
             break;
 
         case "Space":
-            loc.col = 0;
-            loc.row = 1;
-            while (PLAYER.shape.step(loc)) {}
+            while (PLAYER.shape.step(STEP_DOWN)) {}
             playerAtBottomCallback();
             break;
     }
