@@ -1,25 +1,22 @@
 "use strict"
 
-const canvas = document.getElementById("start");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-window.onresize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-};
-
-const GRID_CONTEXT     = canvas.getContext("2d");
-const GRID_POS         = {x: 0, y: 0};
-const GRID_ROWS_COUNT  = 10;
-const GRID_COLS_COUNT  = 10;
+const GRID_ROWS_COUNT  = 20;
+const GRID_COLS_COUNT  = 15;
 const GRID_CELL_WIDTH  = 50;
 const GRID_CELL_HEIGHT = 50;
 const GRID_CELL_BORDER = 1;
 const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
+const GRID_POS         = {x: 0, y: 0};
 const GRID_BG_COLOR    = "#101010";
 const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GRID_COLS_COUNT).fill(0));
 const DARKEN_FACTOR    = 0.1;
+
+const canvas = document.getElementById("start");
+canvas.width = GRID_WIDTH;
+canvas.height = GRID_HEIGHT;
+const GRID_CONTEXT = canvas.getContext("2d");
+
 const SHAPE_SCHEMES = [
     [
         [[1,1],
