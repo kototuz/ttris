@@ -12,11 +12,6 @@ const GRID_BG_COLOR    = "#101010";
 const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GRID_COLS_COUNT).fill(0));
 const DARKEN_FACTOR    = 0.1;
 
-const canvas = document.getElementById("start");
-canvas.width = GRID_WIDTH;
-canvas.height = GRID_HEIGHT;
-const GRID_CONTEXT = canvas.getContext("2d");
-
 const SHAPE_SCHEMES = [
     [
         [[1,1],
@@ -107,6 +102,21 @@ function Shape(schemeId, dirId, palette, loc) {
 }
 
 
+
+let GRID_CONTEXT;
+let GAME_LOOP_INTERVAL_ID;
+let PLAYER;
+function startGame() {
+    const canvas = document.getElementById("start");
+    canvas.width = GRID_WIDTH;
+    canvas.height = GRID_HEIGHT;
+    console.assert(canvas, "Canvas is not defined");
+    GRID_CONTEXT = canvas.getContext("2d");
+    GAME_LOOP_INTERVAL_ID = setInterval(gameLoop, 1000);
+    PLAYER = { shape: Shape.random(new Loc()) };
+    document.addEventListener("keypress", playerEventListener);
+    gridRender();
+}
 
 Loc.sum = function(l1, row, col) {
     return new Loc(l1.row+row, l1.col+col);
@@ -278,63 +288,6 @@ function gridAdd(shape) {
     }
 }
 
-
-
-const PLAYER = {
-    shape: Shape.random(new Loc()),
-
-    eventListener(e) {
-        PLAYER.shape.clear();
-
-        let loc = new Loc();
-        switch (e.code) {
-            case "KeyH":
-                loc.col = -1;
-                loc.row = 0;
-                PLAYER.shape.step(loc);
-                break;
-
-            case "KeyJ":
-                loc.col = 0;
-                loc.row = 1;
-                PLAYER.shape.step(loc);
-                if (PLAYER.shape.isAtBottom()) {
-                    playerAtBottomCallback();
-                }
-                break;
-
-            case "KeyL":
-                loc.col = 1;
-                loc.row = 0;
-                PLAYER.shape.step(loc);
-                break;
-
-            case "KeyK":
-                PLAYER.shape.flip();
-                break;
-
-            case "Space":
-                loc.col = 0;
-                loc.row = 1;
-                while (PLAYER.shape.step(loc)) {}
-                break;
-        }
-
-        PLAYER.shape.render();
-    }
-};
-
-gridRender();
-document.addEventListener("keydown", PLAYER.eventListener);
-const GAME_LOOP = setInterval(() => {
-    PLAYER.shape.clear();
-        if (!PLAYER.shape.step(new Loc(1, 0))) {
-            playerAtBottomCallback();
-        }
-    // PLAYER.shape.isAtBottom()
-    PLAYER.shape.render();
-}, 1000);
-
 function playerAtBottomCallback() {
     if (PLAYER.shape.loc.row == 0) {
         console.log("GAME OVER!");
@@ -348,6 +301,72 @@ function playerAtBottomCallback() {
     gridRender();
     PLAYER.shape = Shape.random(new Loc());
 }
+
+function gameLoopPause() {
+    clearInterval(GAME_LOOP_INTERVAL_ID);
+}
+
+function gameLoopResume() {
+    GAME_LOOP_INTERVAL_ID = setInterval(gameLoop, 1000);
+}
+
+function gameLoop() {
+    PLAYER.shape.clear();
+    if (!PLAYER.shape.step(new Loc(1, 0))) {
+        playerAtBottomCallback();
+    }
+    PLAYER.shape.render();
+}
+
+function playerEventListener(e) {
+    PLAYER.shape.clear();
+
+    let loc = new Loc();
+    switch (e.code) {
+        case "KeyH":
+            loc.col = -1;
+            loc.row = 0;
+            PLAYER.shape.step(loc);
+            break;
+
+        case "KeyJ":
+            loc.col = 0;
+            loc.row = 1;
+            PLAYER.shape.step(loc);
+            if (PLAYER.shape.isAtBottom()) {
+                playerAtBottomCallback();
+            }
+            break;
+
+        case "KeyL":
+            loc.col = 1;
+            loc.row = 0;
+            PLAYER.shape.step(loc);
+            break;
+
+        case "KeyK":
+            PLAYER.shape.flip();
+            break;
+
+        case "Space":
+            loc.col = 0;
+            loc.row = 1;
+            while (PLAYER.shape.step(loc)) {}
+            break;
+    }
+
+    PLAYER.shape.render();
+}
+
+
+
+(() => {
+    startGame();
+})();
+
+
+
+
 
 
 
