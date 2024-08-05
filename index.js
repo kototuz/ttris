@@ -1,7 +1,7 @@
 "use strict"
 
-const GRID_ROWS_COUNT  = 20;
-const GRID_COLS_COUNT  = 15;
+const GRID_ROWS_COUNT  = 18;
+const GRID_COLS_COUNT  = 13;
 const GRID_CELL_WIDTH  = 50;
 const GRID_CELL_HEIGHT = 50;
 const GRID_CELL_BORDER = 1;
@@ -245,9 +245,6 @@ function gridFillCell(palette, loc) {
 }
 
 function gridRender() {
-    GRID_CONTEXT.fillStyle = GRID_BG_COLOR;
-    GRID_CONTEXT.fillRect(GRID_POS.x, GRID_POS.y, GRID_WIDTH, GRID_HEIGHT);
-
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
         for (let col = 0; col < GRID_COLS_COUNT; col++) {
             const palette = GRID[row][col];
@@ -266,7 +263,7 @@ function gridClearCell(loc) {
         loc.col < GRID_COLS_COUNT
     );
 
-    GRID_CONTEXT.fillStyle = GRID_BG_COLOR;
+    GRID_CONTEXT.fillStyle = "#101010";
     GRID_CONTEXT.fillRect(...loc.asPos(), GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
 }
 
