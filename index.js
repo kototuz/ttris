@@ -9,7 +9,7 @@ const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
 const GRID_POS         = {x: 0, y: 0};
 const GRID_BG_COLOR    = "#101010";
-const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array(GRID_COLS_COUNT).fill(0));
+const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array());
 const DARKEN_FACTOR    = 0.1;
 const PLAYER_SPAWN_POS = new Loc(0, Math.floor(GRID_COLS_COUNT/2));
 
@@ -246,7 +246,7 @@ function gridFillCell(palette, loc) {
 
 function gridRender() {
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
-        for (let col = 0; col < GRID_COLS_COUNT; col++) {
+        for (let col = 0; col < GRID[row].length; col++) {
             const palette = GRID[row][col];
             if (palette) {
                 gridFillCell(palette, new Loc(row, col));
@@ -269,13 +269,17 @@ function gridClearCell(loc) {
 
 function gridRemoveFilledLines() {
     let count = 0;
-    GRID.forEach((row, idx) => {
-        if (row.every(e => e !== 0)) {
-            GRID.splice(idx, 1);
-            GRID.unshift(new Array(GRID_COLS_COUNT).fill(0));
+    rows: for (let row = 0; row < GRID_ROWS_COUNT; row++) {
+        if (GRID[row].length == GRID_COLS_COUNT) {
+            for (let col = 0; col < GRID[row].length; col++) {
+                if (!GRID[row][col]) continue rows;
+            }
+
+            GRID.splice(row, 1);
+            GRID.unshift(new Array());
             count++;
         }
-    });
+    }
 
     return count;
 }
