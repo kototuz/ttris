@@ -119,9 +119,14 @@ function startGame() {
     console.assert(canvas, "Canvas is not defined");
     GRID_CONTEXT = canvas.getContext("2d");
     GAME_LOOP_INTERVAL_ID = setInterval(gameLoop, 1000);
-    PLAYER = { shape: Shape.random(PLAYER_SPAWN_POS) };
+    PLAYER = {
+        shape: Shape.random(PLAYER_SPAWN_POS),
+        filledLines: 0
+    };
+
     document.addEventListener("keypress", playerEventListener);
     gridRender();
+    renderHUD();
 }
 
 Loc.sum = function(l1, row, col) {
@@ -281,6 +286,7 @@ function gridRemoveFilledLines() {
                 GRID.splice(row, 1);
                 GRID.unshift(new Array());
                 gridRender();
+                renderHUD();
                 PLAYER.shape.render();
             });
             count++;
@@ -309,9 +315,16 @@ function playerAtBottomCallback() {
     }
 
     gridAdd(PLAYER.shape)
-    gridRemoveFilledLines();
+    PLAYER.filledLines += gridRemoveFilledLines();
     gridRender();
+    renderHUD();
     PLAYER.shape = Shape.random(PLAYER_SPAWN_POS);
+}
+
+function renderHUD() {
+    GRID_CONTEXT.font = "40px serif";
+    GRID_CONTEXT.fillStyle = "white";
+    GRID_CONTEXT.fillText(`Filled lines: ${PLAYER.filledLines}`, 30, 50);
 }
 
 function gameLoopPause() {
@@ -360,6 +373,7 @@ function playerEventListener(e) {
     }
 
     PLAYER.shape.render();
+    renderHUD();
 }
 
 function playRemoveRowAnim(row) {
@@ -410,5 +424,4 @@ function animate({timing, draw, duration}) {
 
 
 
-// TODO: add hud
 // TODO: add particles
