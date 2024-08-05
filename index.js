@@ -321,6 +321,7 @@ function playerAtBottomCallback() {
     PLAYER.shape = Shape.random(PLAYER_SPAWN_POS);
 }
 
+// FIXME: font overlaping
 function renderHUD() {
     GRID_CONTEXT.font = "40px serif";
     GRID_CONTEXT.fillStyle = "white";
@@ -417,11 +418,5 @@ function animate({timing, draw, duration}) {
     startGame();
 })();
 
-
-
-
-
-
-
-
+// TODO: It's not convenient to update the game
 // TODO: add particles
