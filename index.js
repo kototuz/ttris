@@ -364,14 +364,14 @@ function playerEventListener(e) {
 function playRemoveRowAnim(row) {
     return animate({
         timing: (t) => t,
-        duration: 1000,
+        duration: 250,
         draw: (progress) => {
-            GRID_CONTEXT.fillStyle = "white";
+            GRID_CONTEXT.fillStyle = "#101010";
             GRID_CONTEXT.fillRect(
                 0,
                 row*GRID_CELL_HEIGHT,
-                GRID_WIDTH*progress,
-                GRID_CELL_HEIGHT
+                GRID_WIDTH,
+                GRID_CELL_HEIGHT*progress
             );
         },
     });
