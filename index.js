@@ -245,6 +245,7 @@ function gridFillCell(palette, loc) {
 }
 
 function gridRender() {
+    GRID_CONTEXT.reset();
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
         for (let col = 0; col < GRID[row].length; col++) {
             const palette = GRID[row][col];
@@ -275,8 +276,12 @@ function gridRemoveFilledLines() {
                 if (!GRID[row][col]) continue rows;
             }
 
-            GRID.splice(row, 1);
-            GRID.unshift(new Array());
+            playRemoveRowAnim(row).then(() => {
+                GRID.splice(row, 1);
+                GRID.unshift(new Array());
+                gridRender();
+                PLAYER.shape.render();
+            });
             count++;
         }
     }
@@ -354,6 +359,41 @@ function playerEventListener(e) {
     }
 
     PLAYER.shape.render();
+}
+
+function playRemoveRowAnim(row) {
+    return animate({
+        timing: (t) => t,
+        duration: 1000,
+        draw: (progress) => {
+            GRID_CONTEXT.fillStyle = "white";
+            GRID_CONTEXT.fillRect(
+                0,
+                row*GRID_CELL_HEIGHT,
+                GRID_WIDTH*progress,
+                GRID_CELL_HEIGHT
+            );
+        },
+    });
+}
+
+function animate({timing, draw, duration}) {
+    return new Promise((resolve) => {
+        let start = performance.now();
+
+        requestAnimationFrame(function animate(time) {
+            let timeFraction = (time - start) / duration;
+            if (timeFraction > 1) timeFraction = 1;
+
+            let progress = timing(timeFraction);
+
+            draw(progress);
+
+            if (timeFraction < 1) {
+                requestAnimationFrame(animate);
+            } else resolve();
+        });
+    });
 }
 
 
