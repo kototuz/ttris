@@ -113,6 +113,7 @@ let GAME_LOOP_INTERVAL_ID;
 let PLAYER;
 function startGame() {
     const canvas = document.getElementById("start");
+    canvas.style.background = GRID_BG_COLOR;
     canvas.width = GRID_WIDTH;
     canvas.height = GRID_HEIGHT;
     console.assert(canvas, "Canvas is not defined");
@@ -264,7 +265,7 @@ function gridClearCell(loc) {
         loc.col < GRID_COLS_COUNT
     );
 
-    GRID_CONTEXT.fillStyle = "#101010";
+    GRID_CONTEXT.fillStyle = GRID_BG_COLOR;
     GRID_CONTEXT.fillRect(...loc.asPos(), GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
 }
 
@@ -366,7 +367,7 @@ function playRemoveRowAnim(row) {
         timing: (t) => t,
         duration: 250,
         draw: (progress) => {
-            GRID_CONTEXT.fillStyle = "#101010";
+            GRID_CONTEXT.fillStyle = GRID_BG_COLOR;
             GRID_CONTEXT.fillRect(
                 0,
                 row*GRID_CELL_HEIGHT,
