@@ -1,5 +1,6 @@
 "use strict"
 
+const GAME_TICK_MS     = 1;
 const GRID_ROWS_COUNT  = 18;
 const GRID_COLS_COUNT  = 13;
 const GRID_CELL_WIDTH  = 50;
@@ -17,6 +18,7 @@ const STEP_LEFT  = new Loc(0, -1);
 const STEP_RIGHT = new Loc(0, 1);
 const STEP_DOWN  = new Loc(1, 0);
 
+// TODO: more performance. Set active cells using [row][col, col, ...colN]
 const SHAPE_SCHEMES = [
     [
         ["@@",
@@ -120,7 +122,6 @@ function Shape(schemeId, dirId, palette, loc) {
 
 
 let GRID_CONTEXT;
-let GAME_LOOP_INTERVAL_ID;
 let PLAYER;
 function startGame() {
     const canvas = document.getElementById("start");
@@ -129,7 +130,7 @@ function startGame() {
     canvas.height = GRID_HEIGHT;
     console.assert(canvas, "Canvas is not defined");
     GRID_CONTEXT = canvas.getContext("2d");
-    GAME_LOOP_INTERVAL_ID = setInterval(gameLoop, 1000);
+    requestAnimationFrame(gameTick);
     PLAYER = {
         shape: Shape.random(PLAYER_SPAWN_POS),
         filledLines: 0
@@ -137,7 +138,7 @@ function startGame() {
 
     document.addEventListener("keypress", playerEventListener);
     gridRender();
-    renderHUD();
+    HUDRender();
 }
 
 Loc.sum = function(l1, row, col) {
@@ -272,6 +273,14 @@ function gridRender() {
     }
 }
 
+function gridClearEmptyCells() {
+    GRID.forEach((row, i) => row.forEach((cell, y) => {
+        if (!cell) {
+            gridClearCell(new Loc(i, y));
+        }
+    }));
+}
+
 function gridClearCell(loc) {
     console.assert(
         loc.row >= 0 &&
@@ -296,7 +305,7 @@ function gridRemoveFilledLines() {
                 GRID.splice(row, 1);
                 GRID.unshift(new Array());
                 gridRender();
-                renderHUD();
+                HUDRender();
                 PLAYER.shape.render();
             });
             count++;
@@ -316,43 +325,41 @@ function playerAtBottomCallback() {
     if (PLAYER.shape.loc.row == 0) {
         console.log("GAME OVER!");
         document.removeEventListener("keypress", playerEventListener);
-        clearInterval(GAME_LOOP_INTERVAL_ID);
         return;
     }
 
     gridAdd(PLAYER.shape)
     PLAYER.filledLines += gridRemoveFilledLines();
     gridRender();
-    renderHUD();
+    HUDRender();
     PLAYER.shape = Shape.random(PLAYER_SPAWN_POS);
 }
 
 // FIXME: font overlaping
-function renderHUD() {
+function HUDRender() {
     GRID_CONTEXT.font = "40px serif";
     GRID_CONTEXT.fillStyle = "white";
     GRID_CONTEXT.fillText(`Filled lines: ${PLAYER.filledLines}`, 30, 50);
 }
 
-function gameLoopPause() {
-    clearInterval(GAME_LOOP_INTERVAL_ID);
-}
-
-function gameLoopResume() {
-    GAME_LOOP_INTERVAL_ID = setInterval(gameLoop, 1000);
-}
-
-function gameLoop() {
-    PLAYER.shape.clear();
-    if (!PLAYER.shape.step(STEP_DOWN)) {
-        playerAtBottomCallback();
-    }
+let last = 0;
+function gameTick(dt) {
+    gridClearEmptyCells();
+    gridRender();
     PLAYER.shape.render();
+    HUDRender();
+
+    if (!last || dt - last >= 1000) {
+        last = dt;
+        if (!PLAYER.shape.step(STEP_DOWN)) {
+            playerAtBottomCallback();
+        }
+    }
+
+    requestAnimationFrame(gameTick);
 }
 
 function playerEventListener(e) {
-    PLAYER.shape.clear();
-
     switch (e.code) {
         case "KeyH":
             PLAYER.shape.step(STEP_LEFT);
@@ -378,9 +385,6 @@ function playerEventListener(e) {
             playerAtBottomCallback();
             break;
     }
-
-    PLAYER.shape.render();
-    renderHUD();
 }
 
 function playRemoveRowAnim(row) {
