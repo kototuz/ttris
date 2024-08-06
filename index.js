@@ -5,7 +5,8 @@ const GRID_ROWS_COUNT  = 18;
 const GRID_COLS_COUNT  = 13;
 const GRID_CELL_WIDTH  = 50;
 const GRID_CELL_HEIGHT = 50;
-const GRID_CELL_BORDER = 1;
+const GRID_CELL_BORDER_WIDTH = 1;
+const GRID_CELL_BORDER_COLOR = "#101010";
 const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
 const GRID_POS         = {x: 0, y: 0};
@@ -103,26 +104,22 @@ function Loc(row = 0, col = 0) {
     this.col = col;
 }
 
-function Palette(mainColor) {
-    this.color1 = mainColor;
-    this.color0 = Object.create(mainColor);
-    this.color0.r *= DARKEN_FACTOR;
-    this.color0.g *= DARKEN_FACTOR;
-    this.color0.b *= DARKEN_FACTOR;
-}
-
-function Shape(schemeId, dirId, palette, loc) {
+function Shape(schemeId, dirId, color, loc) {
     this.dirs = SHAPE_SCHEMES[schemeId];
     this.dirId = dirId;
     this.scheme = this.dirs[dirId];
     this.loc = loc;
-    this.palette = palette;
+    this.color = color;
 }
 
 
 
 let GRID_CONTEXT;
 let PLAYER;
+let GAME_IS_FROZEN = false;
+
+
+
 function startGame() {
     const canvas = document.getElementById("start");
     canvas.style.background = GRID_BG_COLOR;
@@ -156,14 +153,6 @@ Loc.prototype.asPos = function() {
     ];
 };
 
-Palette.prototype.toStringColor0 = function() {
-    return `rgb(${this.color0.r}, ${this.color0.g}, ${this.color0.b})`;
-};
-
-Palette.prototype.toStringColor1 = function() {
-    return `rgb(${this.color1.r}, ${this.color1.g}, ${this.color1.b})`;
-};
-
 Shape.random = function(loc) {
     const id = Math.floor(Math.random() * SHAPE_SCHEMES.length);
     const dirId = Math.floor(Math.random() * SHAPE_SCHEMES[id].length);
@@ -173,7 +162,7 @@ Shape.random = function(loc) {
         b: Math.floor(Math.random() * 255),
     };
 
-    return new Shape(id, dirId, new Palette(color), loc);
+    return new Shape(id, dirId, `rgb(${color.r}, ${color.g}, ${color.b})`, loc);
 };
 
 Shape.prototype.step = function(stepLoc) {
@@ -202,7 +191,7 @@ Shape.prototype.flip = function() {
 Shape.prototype.render = function() {
     this.forEnabledCells((row, col) => {
         gridFillCell(
-            this.palette,
+            this.color,
             Loc.sum(this.loc, row, col)
         );
     });
@@ -241,7 +230,7 @@ function hasIntersection(scheme, loc) {
     return false;
 };
 
-function gridFillCell(palette, loc) {
+function gridFillCell(color, loc) {
     console.assert(
         loc.row >= 0 &&
         loc.row < GRID_ROWS_COUNT &&
@@ -250,35 +239,26 @@ function gridFillCell(palette, loc) {
     );
 
     const pos = loc.asPos();
-    GRID_CONTEXT.fillStyle = palette.toStringColor0();
+    GRID_CONTEXT.fillStyle = GRID_CELL_BORDER_COLOR;
     GRID_CONTEXT.fillRect(...pos, GRID_CELL_WIDTH, GRID_CELL_HEIGHT);
-    GRID_CONTEXT.fillStyle = palette.toStringColor1();
+    GRID_CONTEXT.fillStyle = color;
     GRID_CONTEXT.fillRect(
-        pos[0]+GRID_CELL_BORDER,
-        pos[1]+GRID_CELL_BORDER,
-        GRID_CELL_WIDTH-2*GRID_CELL_BORDER,
-        GRID_CELL_HEIGHT-2*GRID_CELL_BORDER
+        pos[0]+GRID_CELL_BORDER_WIDTH,
+        pos[1]+GRID_CELL_BORDER_WIDTH,
+        GRID_CELL_WIDTH-2*GRID_CELL_BORDER_WIDTH,
+        GRID_CELL_HEIGHT-2*GRID_CELL_BORDER_WIDTH
     );
 }
 
 function gridRender() {
-    GRID_CONTEXT.reset();
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
         for (let col = 0; col < GRID[row].length; col++) {
-            const palette = GRID[row][col];
-            if (palette) {
-                gridFillCell(palette, new Loc(row, col));
+            const color = GRID[row][col];
+            if (color) {
+                gridFillCell(color, new Loc(row, col));
             }
         }
     }
-}
-
-function gridClearEmptyCells() {
-    GRID.forEach((row, i) => row.forEach((cell, y) => {
-        if (!cell) {
-            gridClearCell(new Loc(i, y));
-        }
-    }));
 }
 
 function gridClearCell(loc) {
@@ -317,7 +297,7 @@ function gridRemoveFilledLines() {
 
 function gridAdd(shape) {
     shape.forEnabledCells((row, col) => {
-        GRID[shape.loc.row+row][shape.loc.col+col] = shape.palette;
+        GRID[shape.loc.row+row][shape.loc.col+col] = shape.color;
     });
 }
 
@@ -344,7 +324,7 @@ function HUDRender() {
 
 let last = 0;
 function gameTick(dt) {
-    gridClearEmptyCells();
+    GRID_CONTEXT.reset();
     gridRender();
     PLAYER.shape.render();
     HUDRender();
@@ -367,9 +347,6 @@ function playerEventListener(e) {
 
         case "KeyJ":
             PLAYER.shape.step(STEP_DOWN);
-            if (PLAYER.shape.isAtBottom()) {
-                playerAtBottomCallback();
-            }
             break;
 
         case "KeyL":
