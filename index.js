@@ -9,7 +9,6 @@ const GRID_CELL_BORDER_WIDTH = 1;
 const GRID_CELL_BORDER_COLOR = "#101010";
 const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
 const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
-const GRID_POS         = {x: 0, y: 0};
 const GRID_BG_COLOR    = "#101010";
 const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array());
 const DARKEN_FACTOR    = 0.1;
@@ -19,7 +18,6 @@ const STEP_LEFT  = new Loc(0, -1);
 const STEP_RIGHT = new Loc(0, 1);
 const STEP_DOWN  = new Loc(1, 0);
 
-// TODO: more performance. Set active cells using [row][col, col, ...colN]
 const SHAPE_SCHEMES = [
     [
         [[0,1],
@@ -148,8 +146,8 @@ Loc.prototype.asArr = function() {
 
 Loc.prototype.asPos = function() {
     return [
-        GRID_POS.x + this.col*GRID_CELL_WIDTH,
-        GRID_POS.y + this.row*GRID_CELL_HEIGHT
+        this.col*GRID_CELL_WIDTH,
+        this.row*GRID_CELL_HEIGHT
     ];
 };
 
@@ -174,10 +172,6 @@ Shape.prototype.step = function(stepLoc) {
     this.loc = newLoc;
     return true;
 }
-
-Shape.prototype.isAtBottom = function() {
-    return hasIntersection(this.scheme, Loc.sum(this.loc, 1, 0));
-};
 
 Shape.prototype.flip = function() {
     const newId = this.dirId+1 == this.dirs.length ? 0 : this.dirId+1;
@@ -404,5 +398,4 @@ function animate({timing, draw, duration}) {
     startGame();
 })();
 
-// TODO: It's not convenient to update the game
 // TODO: add particles
