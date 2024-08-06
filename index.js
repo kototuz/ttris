@@ -19,68 +19,79 @@ const STEP_DOWN  = new Loc(1, 0);
 
 const SHAPE_SCHEMES = [
     [
-        [[1,1],
-         [1,1]],
+        ["@@",
+         "@@",],
     ],
     [
-        [[1,1,0],
-         [0,1,1]],
-        [[0,1],
-         [1,1],
-         [1,0]],
+        ["@@ ",
+         " @@",],
+
+        [" @",
+         "@@",
+         "@ ",],
     ],
     [
-        [[0,1,1],
-         [1,1,0]],
-        [[1,0],
-         [1,1],
-         [0,1]],
+        [" @@",
+         "@@ ",],
+
+        ["@ ",
+         "@@",
+         " @",],
     ],
     [
-        [[0,1,0],
-         [1,1,1]],
-        [[0,1,0],
-         [0,1,1],
-         [0,1,0]],
-        [[0,0,0],
-         [1,1,1],
-         [0,1,0]],
-        [[0,1,0],
-         [1,1,0],
-         [0,1,0]]
+        [" @ ",
+         "@@@",],
+
+        [" @ ",
+         " @@",
+         " @ ",],
+        ["   ",
+         "@@@",
+         " @ ",],
+
+        [" @ ",
+         "@@ ",
+         " @ ",],
     ],
     [
-        [[1,0,0],
-         [1,1,1]],
-        [[1,1],
-         [1,0],
-         [1,0]],
-        [[1,1,1],
-         [0,0,1]],
-        [[0,1],
-         [0,1],
-         [1,1]]
+        ["@  ",
+         "@@@",],
+
+        ["@@",
+         "@ ",
+         "@ ",],
+
+        ["@@@",
+         "  @",],
+
+        [" @",
+         " @",
+         "@@",],
     ],
     [
-        [[0,0,1],
-         [1,1,1]],
-        [[1,0],
-         [1,0],
-         [1,1]],
-        [[1,1,1],
-         [1,0,0]],
-        [[1,1],
-         [0,1],
-         [0,1]],
+        ["  @",
+         "@@@",],
+
+        ["@ ",
+         "@ ",
+         "@@",],
+
+        ["@@@",
+         "@  ",],
+
+        ["@@",
+         " @",
+         " @",],
     ],
     [
-        [[0,0,0,0],
-         [1,1,1,1]],
-        [[0,1],
-         [0,1],
-         [0,1],
-         [0,1]],
-    ]
+        ["    ",
+         "@@@@",],
+
+        [" @",
+         " @",
+         " @",
+         " @",],
+    ],
 ];
 
 
@@ -190,7 +201,7 @@ Shape.prototype.flip = function() {
 Shape.prototype.render = function() {
     for (let row = 0; row < this.scheme.length; row++) {
         for (let col = 0; col < this.scheme[row].length; col++) {
-            if (this.scheme[row][col]) {
+            if (this.scheme[row][col] !== ' ') {
                 gridFillCell(
                     this.palette,
                     Loc.sum(this.loc, row, col)
@@ -204,7 +215,7 @@ Shape.prototype.clear = function() {
     console.log();
     for (let row = 0; row < this.scheme.length; row++) {
         for (let col = 0; col < this.scheme[row].length; col++) {
-            if (this.scheme[row][col]) {
+            if (this.scheme[row][col] !== ' ') {
                 gridClearCell(new Loc(this.loc.row+row, this.loc.col+col));
             }
         }
@@ -218,7 +229,7 @@ function hasIntersection(scheme, loc) {
         for (let col = 0; col < scheme[row].length; col++) {
             const cellGlobalLoc = Loc.sum(loc, row, col);
             if (
-                scheme[row][col] &&
+                scheme[row][col] !== ' ' &&
                 (cellGlobalLoc.col < 0 ||
                 cellGlobalLoc.col == GRID_COLS_COUNT ||
                 cellGlobalLoc.row == GRID_ROWS_COUNT ||
@@ -299,7 +310,7 @@ function gridRemoveFilledLines() {
 function gridAdd(shape) {
     for (let row = 0; row < shape.scheme.length; row++) {
         for (let col = 0; col < shape.scheme[row].length; col++) {
-            if (shape.scheme[row][col]) {
+            if (shape.scheme[row][col] !== ' ') {
                 GRID[shape.loc.row+row][shape.loc.col+col] = shape.palette;
             }
         }
