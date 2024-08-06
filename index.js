@@ -199,28 +199,27 @@ Shape.prototype.flip = function() {
 };
 
 Shape.prototype.render = function() {
-    for (let row = 0; row < this.scheme.length; row++) {
-        for (let col = 0; col < this.scheme[row].length; col++) {
-            if (this.scheme[row][col] !== ' ') {
-                gridFillCell(
-                    this.palette,
-                    Loc.sum(this.loc, row, col)
-                );
-            }
-        }
-    }
+    this.forEnabledCells((row, col) => {
+        gridFillCell(
+            this.palette,
+            Loc.sum(this.loc, row, col)
+        );
+    });
 };
 
 Shape.prototype.clear = function() {
-    console.log();
+    this.forEnabledCells((row, col) => {
+        gridClearCell(Loc.sum(this.loc, row, col));
+    });
+};
+
+Shape.prototype.forEnabledCells = function(fn) {
     for (let row = 0; row < this.scheme.length; row++) {
         for (let col = 0; col < this.scheme[row].length; col++) {
-            if (this.scheme[row][col] !== ' ') {
-                gridClearCell(new Loc(this.loc.row+row, this.loc.col+col));
-            }
+            if (this.scheme[row][col] !== " ") fn(row, col);
         }
     }
-};
+}
 
 
 
@@ -308,13 +307,9 @@ function gridRemoveFilledLines() {
 }
 
 function gridAdd(shape) {
-    for (let row = 0; row < shape.scheme.length; row++) {
-        for (let col = 0; col < shape.scheme[row].length; col++) {
-            if (shape.scheme[row][col] !== ' ') {
-                GRID[shape.loc.row+row][shape.loc.col+col] = shape.palette;
-            }
-        }
-    }
+    shape.forEnabledCells((row, col) => {
+        GRID[shape.loc.row+row][shape.loc.col+col] = shape.palette;
+    });
 }
 
 function playerAtBottomCallback() {
