@@ -398,4 +398,6 @@ function animate({timing, draw, duration}) {
     startGame();
 })();
 
+// TODO: the ability to freeze the game
+// TODO: the game over screen
 // TODO: add particles
