@@ -22,78 +22,78 @@ const STEP_DOWN  = new Loc(1, 0);
 // TODO: more performance. Set active cells using [row][col, col, ...colN]
 const SHAPE_SCHEMES = [
     [
-        ["@@",
-         "@@",],
+        [[0,1],
+         [0,1]],
     ],
     [
-        ["@@ ",
-         " @@",],
+        [[0,1],
+         [1,2]],
 
-        [" @",
-         "@@",
-         "@ ",],
+        [[1],
+         [0,1],
+         [0]],
     ],
     [
-        [" @@",
-         "@@ ",],
+        [[1,2],
+         [0,1]],
 
-        ["@ ",
-         "@@",
-         " @",],
+        [[0],
+         [0,1],
+         [1]],
     ],
     [
-        [" @ ",
-         "@@@",],
+        [[1],
+         [0,1,2]],
 
-        [" @ ",
-         " @@",
-         " @ ",],
-        ["   ",
-         "@@@",
-         " @ ",],
+        [[1],
+         [1,2],
+         [1]],
 
-        [" @ ",
-         "@@ ",
-         " @ ",],
+        [[],
+         [0,1,2],
+         [1]],
+
+        [[1],
+         [0,1],
+         [1]],
     ],
     [
-        ["@  ",
-         "@@@",],
+        [[0],
+         [0,1,2]],
 
-        ["@@",
-         "@ ",
-         "@ ",],
+        [[0,1],
+         [0],
+         [0]],
 
-        ["@@@",
-         "  @",],
+        [[0,1,2],
+         [2]],
 
-        [" @",
-         " @",
-         "@@",],
+        [[1],
+         [1],
+         [0,1]],
     ],
     [
-        ["  @",
-         "@@@",],
+        [[2],
+         [0,1,2]],
 
-        ["@ ",
-         "@ ",
-         "@@",],
+        [[0],
+         [0],
+         [0,1]],
 
-        ["@@@",
-         "@  ",],
+        [[0,1,2],
+         [0]],
 
-        ["@@",
-         " @",
-         " @",],
+        [[0,1],
+         [1],
+         [1]],
     ],
     [
-        ["    ",
-         "@@@@",],
-
-        [" @",
-         " @",
-         " @",
-         " @",],
+        [[],
+         [0,1,2,3]],
+        [[1],
+         [1],
+         [1],
+         [1]]
     ],
 ];
 
@@ -205,8 +205,8 @@ Shape.prototype.clear = function() {
 
 Shape.prototype.forEnabledCells = function(fn) {
     for (let row = 0; row < this.scheme.length; row++) {
-        for (let col = 0; col < this.scheme[row].length; col++) {
-            if (this.scheme[row][col] !== " ") fn(row, col);
+        for (const col of this.scheme[row]) {
+            fn(row, col);
         }
     }
 }
@@ -215,14 +215,13 @@ Shape.prototype.forEnabledCells = function(fn) {
 
 function hasIntersection(scheme, loc) {
     for (let row = 0; row < scheme.length; row++) {
-        for (let col = 0; col < scheme[row].length; col++) {
+        for (const col of scheme[row]) {
             const cellGlobalLoc = Loc.sum(loc, row, col);
             if (
-                scheme[row][col] !== ' ' &&
-                (cellGlobalLoc.col < 0 ||
+                cellGlobalLoc.col < 0 ||
                 cellGlobalLoc.col == GRID_COLS_COUNT ||
                 cellGlobalLoc.row == GRID_ROWS_COUNT ||
-                GRID[cellGlobalLoc.row][cellGlobalLoc.col])
+                GRID[cellGlobalLoc.row][cellGlobalLoc.col]
             ) return true;
         }
     }
