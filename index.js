@@ -287,8 +287,6 @@ function gridRemoveFilledLines() {
             playRemoveRowAnim(row).then(() => {
                 GRID.splice(row, 1);
                 GRID.unshift(new Array());
-                gridRender();
-                HUDRender();
                 PLAYER.shape.render();
             });
             count++;
@@ -308,13 +306,12 @@ function playerAtBottomCallback() {
     if (PLAYER.shape.loc.row == 0) {
         console.log("GAME OVER!");
         document.removeEventListener("keypress", playerEventListener);
+        GAME_IS_FROZEN = true;
         return;
     }
 
     gridAdd(PLAYER.shape)
     PLAYER.filledLines += gridRemoveFilledLines();
-    gridRender();
-    HUDRender();
     PLAYER.shape = Shape.random(PLAYER_SPAWN_POS);
 }
 
@@ -326,6 +323,8 @@ function HUDRender() {
 
 let last = 0;
 function gameTick(dt) {
+    if (GAME_IS_FROZEN) return;
+
     GRID_CONTEXT.reset();
     gridRender();
     PLAYER.shape.render();
