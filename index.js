@@ -436,3 +436,4 @@ function animate({timing, draw, duration}) {
 })();
 
 // TODO: add particles
+// TODO: points computing
