@@ -114,7 +114,7 @@ function Shape(schemeId, dirId, color, loc) {
 
 let GRID_CONTEXT;
 let PLAYER;
-let GAME_IS_FROZEN = false;
+let GAME_IS_PAUSED = false;
 
 
 function startGame() {
@@ -142,7 +142,7 @@ function startGame() {
             shape: Shape.random(PLAYER_SPAWN_POS),
             filledLines: 0
         }
-        document.addEventListener("keypress", playerEventListener);
+        document.addEventListener("keydown", playerEventListener);
     });
 }
 
@@ -306,7 +306,7 @@ function playerAtBottomCallback() {
     if (PLAYER.shape.loc.row == 0) {
         console.log("GAME OVER!");
         document.removeEventListener("keypress", playerEventListener);
-        GAME_IS_FROZEN = true;
+        GAME_IS_PAUSED = true;
         return;
     }
 
@@ -323,24 +323,31 @@ function HUDRender() {
 
 let last = 0;
 function gameTick(dt) {
-    if (GAME_IS_FROZEN) return;
+    try {
+        if (GAME_IS_PAUSED) return;
 
-    GRID_CONTEXT.reset();
-    gridRender();
-    PLAYER.shape.render();
-    HUDRender();
+        GRID_CONTEXT.reset();
+        gridRender();
+        PLAYER.shape.render();
+        HUDRender();
 
-    if (!last || dt - last >= 1000-PLAYER.filledLines*15) {
-        last = dt;
-        if (!PLAYER.shape.step(STEP_DOWN)) {
-            playerAtBottomCallback();
+        if (!last || dt - last >= 1000-PLAYER.filledLines*15) {
+            last = dt;
+            if (!PLAYER.shape.step(STEP_DOWN)) {
+                playerAtBottomCallback();
+            }
         }
+    } finally {
+        requestAnimationFrame(gameTick);
     }
-
-    requestAnimationFrame(gameTick);
 }
 
 function playerEventListener(e) {
+    if (GAME_IS_PAUSED) {
+        GAME_IS_PAUSED = false;
+        return;
+    }
+
     switch (e.code) {
         case "KeyH":
             PLAYER.shape.step(STEP_LEFT);
@@ -361,6 +368,14 @@ function playerEventListener(e) {
         case "Space":
             while (PLAYER.shape.step(STEP_DOWN)) {}
             playerAtBottomCallback();
+            break;
+
+        case "Escape":
+            GAME_IS_PAUSED = true;
+            GRID_CONTEXT.fillStyle = "white";
+            GRID_CONTEXT.font = "30px serif";
+            GRID_CONTEXT.textAlign = "center";
+            GRID_CONTEXT.fillText("The game is paused. Press any key to resume.", GRID_WIDTH/2, GRID_HEIGHT/2);
             break;
     }
 }
