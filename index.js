@@ -117,7 +117,6 @@ let PLAYER;
 let GAME_IS_FROZEN = false;
 
 
-
 function startGame() {
     const canvas = document.getElementById("start");
     canvas.style.background = GRID_BG_COLOR;
@@ -321,7 +320,7 @@ function gameTick(dt) {
     PLAYER.shape.render();
     HUDRender();
 
-    if (!last || dt - last >= 1000) {
+    if (!last || dt - last >= 1000-PLAYER.filledLines*15) {
         last = dt;
         if (!PLAYER.shape.step(STEP_DOWN)) {
             playerAtBottomCallback();
