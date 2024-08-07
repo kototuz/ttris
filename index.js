@@ -115,6 +115,7 @@ function Shape(schemeId, dirId, color, loc) {
 let GRID_CONTEXT;
 let PLAYER;
 let GAME_IS_PAUSED = false;
+let GAME_IS_OVER = false;
 
 
 function startGame() {
@@ -304,9 +305,11 @@ function gridAdd(shape) {
 
 function playerAtBottomCallback() {
     if (PLAYER.shape.loc.row == 0) {
-        console.log("GAME OVER!");
-        document.removeEventListener("keypress", playerEventListener);
-        GAME_IS_PAUSED = true;
+        GAME_IS_OVER = true;
+        GRID_CONTEXT.fillStyle = "white";
+        GRID_CONTEXT.font = "30px serif";
+        GRID_CONTEXT.textAlign = "center";
+        GRID_CONTEXT.fillText("Game Over. Press any key to restart.", GRID_WIDTH/2, GRID_HEIGHT/2);
         return;
     }
 
@@ -324,7 +327,7 @@ function HUDRender() {
 let last = 0;
 function gameTick(dt) {
     try {
-        if (GAME_IS_PAUSED) return;
+        if (GAME_IS_PAUSED || GAME_IS_OVER) return;
 
         GRID_CONTEXT.reset();
         gridRender();
@@ -342,9 +345,20 @@ function gameTick(dt) {
     }
 }
 
+function gameRestart() {
+    for (let row = 0; row < GRID_ROWS_COUNT; row++) {
+        GRID[row] = [];
+    }
+    PLAYER.filledLines = 0;
+}
+
 function playerEventListener(e) {
     if (GAME_IS_PAUSED) {
         GAME_IS_PAUSED = false;
+        return;
+    } else if (GAME_IS_OVER) {
+        GAME_IS_OVER = false;
+        gameRestart();
         return;
     }
 
@@ -421,6 +435,4 @@ function animate({timing, draw, duration}) {
     startGame();
 })();
 
-// TODO: the ability to freeze the game
-// TODO: the game over screen
 // TODO: add particles
