@@ -119,20 +119,31 @@ let GAME_IS_FROZEN = false;
 
 function startGame() {
     const canvas = document.getElementById("start");
+    console.assert(canvas, "Canvas is not defined");
     canvas.style.background = GRID_BG_COLOR;
     canvas.width = GRID_WIDTH;
     canvas.height = GRID_HEIGHT;
-    console.assert(canvas, "Canvas is not defined");
     GRID_CONTEXT = canvas.getContext("2d");
-    requestAnimationFrame(gameTick);
-    PLAYER = {
-        shape: Shape.random(PLAYER_SPAWN_POS),
-        filledLines: 0
-    };
 
-    document.addEventListener("keypress", playerEventListener);
-    gridRender();
-    HUDRender();
+    animate({
+        duration: 2000,
+        timing: (t) => t,
+        draw: (p) => {
+            GRID_CONTEXT.reset();
+            GRID_CONTEXT.fillStyle = "white";
+            GRID_CONTEXT.font = "100px serif";
+            GRID_CONTEXT.globalAlpha = p < 0.5 ? p/0.5 : (1.0-p)/0.5;
+            GRID_CONTEXT.textAlign = "center";
+            GRID_CONTEXT.fillText("Welcome!", GRID_WIDTH/2, GRID_HEIGHT/2);
+        },
+    }).then(() => {
+        requestAnimationFrame(gameTick);
+        PLAYER = {
+            shape: Shape.random(PLAYER_SPAWN_POS),
+            filledLines: 0
+        }
+        document.addEventListener("keypress", playerEventListener);
+    });
 }
 
 Loc.sum = function(l1, row, col) {
