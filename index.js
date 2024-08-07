@@ -308,7 +308,6 @@ function playerAtBottomCallback() {
     PLAYER.shape = Shape.random(PLAYER_SPAWN_POS);
 }
 
-// FIXME: font overlaping
 function HUDRender() {
     GRID_CONTEXT.font = "40px serif";
     GRID_CONTEXT.fillStyle = "white";
