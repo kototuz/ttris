@@ -1,14 +1,14 @@
 "use strict"
 
 const GAME_TICK_MS     = 1;
-const GRID_ROWS_COUNT  = 18;
-const GRID_COLS_COUNT  = 13;
-const GRID_CELL_WIDTH  = 50;
-const GRID_CELL_HEIGHT = 50;
+const GRID_ROWS_COUNT  = 20;
+const GRID_COLS_COUNT  = 10;
+let GRID_CELL_WIDTH  = 50;
+let GRID_CELL_HEIGHT = 50;
 const GRID_CELL_BORDER_WIDTH = 1;
 const GRID_CELL_BORDER_COLOR = "#101010";
-const GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
-const GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
+let GRID_WIDTH       = GRID_COLS_COUNT * GRID_CELL_WIDTH;
+let GRID_HEIGHT      = GRID_ROWS_COUNT * GRID_CELL_HEIGHT;
 const GRID_BG_COLOR    = "#101010";
 const GRID             = Array.from({length: GRID_ROWS_COUNT}, e => new Array());
 const DARKEN_FACTOR    = 0.1;
@@ -121,10 +121,28 @@ let GAME_IS_OVER = false;
 function startGame() {
     const canvas = document.getElementById("start");
     console.assert(canvas, "Canvas is not defined");
+    GRID_CONTEXT = canvas.getContext("2d");
+
     canvas.style.background = GRID_BG_COLOR;
+
+    let cell_size = Math.min(
+        Math.floor(window.innerWidth/GRID_COLS_COUNT),
+        Math.floor((window.innerHeight*0.75)/GRID_ROWS_COUNT)
+    );
+
+    GRID_CELL_WIDTH = cell_size;
+    GRID_CELL_HEIGHT = cell_size;
+
+    GRID_WIDTH = cell_size*GRID_COLS_COUNT;
+    GRID_HEIGHT = cell_size*GRID_ROWS_COUNT;
     canvas.width = GRID_WIDTH;
     canvas.height = GRID_HEIGHT;
-    GRID_CONTEXT = canvas.getContext("2d");
+
+    const game = document.getElementById("game");
+    game.style.width = `${GRID_WIDTH}px`;
+
+    const controls = document.getElementById("controls");
+    controls.style.height = `${0.25*window.innerHeight}px`;
 
     animate({
         duration: 2000,
@@ -143,7 +161,27 @@ function startGame() {
             shape: Shape.random(PLAYER_SPAWN_POS),
             filledLines: 0
         }
+
         document.addEventListener("keydown", playerEventListener);
+        document.getElementById("controls-left").addEventListener("click", (e) => {
+            if (GAME_IS_OVER) gameRestart();
+            else PLAYER.shape.step(STEP_LEFT);
+        });
+        document.getElementById("controls-rotate").addEventListener("click", (e) => {
+            if (GAME_IS_OVER) gameRestart();
+            else PLAYER.shape.flip();
+        });
+        document.getElementById("controls-right").addEventListener("click", (e) => {
+            if (GAME_IS_OVER) gameRestart();
+            else PLAYER.shape.step(STEP_RIGHT);
+        });
+        document.getElementById("controls-down").addEventListener("click", (e) => {
+            if (GAME_IS_OVER) gameRestart();
+            else {
+                while (PLAYER.shape.step(STEP_DOWN)) {}
+                playerAtBottomCallback();
+            }
+        });
     });
 }
 
@@ -321,7 +359,7 @@ function playerAtBottomCallback() {
 function HUDRender() {
     GRID_CONTEXT.font = "40px serif";
     GRID_CONTEXT.fillStyle = "white";
-    GRID_CONTEXT.fillText(`Filled lines: ${PLAYER.filledLines}`, 30, 50);
+    GRID_CONTEXT.fillText(`Score: ${PLAYER.filledLines}`, 30, 50);
 }
 
 let last = 0;
@@ -346,6 +384,7 @@ function gameTick(dt) {
 }
 
 function gameRestart() {
+    GAME_IS_OVER = false;
     for (let row = 0; row < GRID_ROWS_COUNT; row++) {
         GRID[row] = [];
     }
@@ -357,7 +396,6 @@ function playerEventListener(e) {
         GAME_IS_PAUSED = false;
         return;
     } else if (GAME_IS_OVER) {
-        GAME_IS_OVER = false;
         gameRestart();
         return;
     }
